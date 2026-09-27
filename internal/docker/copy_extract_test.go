@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -42,6 +43,9 @@ func TestCopyExtractRejectsTraversalAndSymlinks(t *testing.T) {
 }
 
 func TestCopyExtractCapsFileModes(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX file modes are not preserved on Windows")
+	}
 	root := t.TempDir()
 	for _, tc := range []struct {
 		name string
