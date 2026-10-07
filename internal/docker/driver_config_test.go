@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -62,12 +63,12 @@ func TestDockerMountValidationSecurityCorpus(t *testing.T) {
 		wantErr    bool
 		wantSuffix string
 	}{
-		{name: "bind read only relabel shared", mount: `{"type":"bind","source":"` + validBind + `","target":"/data","read_only":true,"selinux_label":"shared"}`, binds: true, wantSuffix: ":/data:ro,z"},
-		{name: "bind private relabel", mount: `{"type":"bind","source":"` + validBind + `","target":"/data","selinux_label":"private"}`, binds: true, wantSuffix: ":/data:ro,Z"},
-		{name: "bind disabled", mount: `{"type":"bind","source":"` + validBind + `","target":"/data"}`, wantErr: true},
+		{name: "bind read only relabel shared", mount: `{"type":"bind","source":` + strconv.Quote(validBind) + `,"target":"/data","read_only":true,"selinux_label":"shared"}`, binds: true, wantSuffix: ":/data:ro,z"},
+		{name: "bind private relabel", mount: `{"type":"bind","source":` + strconv.Quote(validBind) + `,"target":"/data","selinux_label":"private"}`, binds: true, wantSuffix: ":/data:ro,Z"},
+		{name: "bind disabled", mount: `{"type":"bind","source":` + strconv.Quote(validBind) + `,"target":"/data"}`, wantErr: true},
 		{name: "relative bind source", mount: `{"type":"bind","source":"relative","target":"/data"}`, binds: true, wantErr: true},
 		{name: "missing bind source", mount: `{"type":"bind","source":"/missing/whaleshell-source","target":"/data"}`, binds: true, wantErr: true},
-		{name: "invalid SELinux label", mount: `{"type":"bind","source":"` + validBind + `","target":"/data","selinux_label":"relabel-all"}`, binds: true, wantErr: true},
+		{name: "invalid SELinux label", mount: `{"type":"bind","source":` + strconv.Quote(validBind) + `,"target":"/data","selinux_label":"relabel-all"}`, binds: true, wantErr: true},
 		{name: "root target", mount: `{"type":"volume","source":"cache","target":"/"}`, wantErr: true},
 		{name: "relative target", mount: `{"type":"volume","source":"cache","target":"data"}`, wantErr: true},
 		{name: "traversal target", mount: `{"type":"volume","source":"cache","target":"/safe/../etc"}`, wantErr: true},

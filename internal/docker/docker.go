@@ -203,7 +203,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 			return driver.Handle{}, fmt.Errorf("docker supervisor: hardened init and policy are required")
 		}
 		info, statErr := os.Stat(spec.SupervisorBin)
-		if statErr != nil || !info.Mode().IsRegular() || info.Mode().Perm()&0o111 == 0 {
+		if statErr != nil || !info.Mode().IsRegular() || runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
 			return driver.Handle{}, fmt.Errorf("docker supervisor binary is unavailable or not executable")
 		}
 	}

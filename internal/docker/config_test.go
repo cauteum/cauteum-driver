@@ -40,7 +40,7 @@ func TestConfigFromMapRejectsUnconsumedAndInvalidFields(t *testing.T) {
 
 func TestConfigFromMapValidatesGuestTLSAsAnAllOrNonePathSet(t *testing.T) {
 	dir := t.TempDir()
-	paths := []string{dir + "/ca.pem", dir + "/cert.pem", dir + "/key.pem"}
+	paths := []string{filepath.Join(dir, "ca.pem"), filepath.Join(dir, "cert.pem"), filepath.Join(dir, "key.pem")}
 	cfg, _, err := ConfigFromMap(map[string]any{"guest_tls_ca": paths[0], "guest_tls_cert": paths[1], "guest_tls_key": paths[2]})
 	if err != nil || cfg.GuestTLSCA != paths[0] || cfg.GuestTLSCert != paths[1] || cfg.GuestTLSKey != paths[2] {
 		t.Fatalf("TLS config=%+v err=%v", cfg, err)

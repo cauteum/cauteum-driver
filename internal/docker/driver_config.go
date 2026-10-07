@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -96,14 +97,12 @@ func parseDockerMount(fields map[string]json.RawMessage, enableBindMounts bool) 
 		return enginemount.Mount{}, "", "", fmt.Errorf("target is required")
 	}
 	target = strings.TrimSuffix(target, "/")
-	if !filepath.IsAbs(target) || target == "/" || strings.ContainsAny(target, "\x00\\") || strings.TrimSpace(target) != target {
+	if !path.IsAbs(target) || target == "/" || path.Clean(target) != target || strings.ContainsAny(target, "\x00\\") || strings.TrimSpace(target) != target {
 		return enginemount.Mount{}, "", "", fmt.Errorf("target must be a normalized absolute non-root path")
 	}
 	for _, part := range strings.Split(target, "/") {
-		if part == "." || part == ".." || part == "" && target != "" {
-			if part == "." || part == ".." {
-				return enginemount.Mount{}, "", "", fmt.Errorf("target contains a traversal component")
-			}
+		if part == "." || part == ".." {
+			return enginemount.Mount{}, "", "", fmt.Errorf("target contains a traversal component")
 		}
 	}
 	if err := mounts.ValidateContainerMountTarget(target); err != nil {
@@ -178,7 +177,7 @@ func parseDockerMount(fields map[string]json.RawMessage, enableBindMounts bool) 
 		if err != nil {
 			return enginemount.Mount{}, "", "", err
 		}
-		if subpath != "" && (filepath.IsAbs(subpath) || strings.Contains(subpath, "..") || strings.ContainsAny(subpath, "\\ ")) {
+		if subpath != "" && (path.IsAbs(subpath) || path.Clean(subpath) != subpath || strings.ContainsAny(subpath, "\\ ")) {
 			return enginemount.Mount{}, "", "", fmt.Errorf("subpath must be a safe relative path")
 		}
 		return enginemount.Mount{Type: enginemount.TypeVolume, Source: source, Target: target, ReadOnly: readOnly, VolumeOptions: &enginemount.VolumeOptions{Subpath: subpath}}, "", target, nil
