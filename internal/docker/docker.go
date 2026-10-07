@@ -203,7 +203,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 			return driver.Handle{}, fmt.Errorf("docker supervisor: hardened init and policy are required")
 		}
 		info, statErr := os.Stat(spec.SupervisorBin)
-		if statErr != nil || !info.Mode().IsRegular() || runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
+		if statErr != nil || !supervisorBinaryExecutable(info) {
 			return driver.Handle{}, fmt.Errorf("docker supervisor binary is unavailable or not executable")
 		}
 	}
@@ -1984,14 +1984,9 @@ func dockerContextName() string {
 	return "default"
 }
 
-func classifyIsolation(hostGOOS, operatingSystem, osType string) string {
-	blob := strings.ToLower(operatingSystem + " " + osType)
-	if strings.Contains(blob, "docker desktop") ||
-		strings.Contains(blob, "dockerdesktop") ||
-		hostGOOS == "darwin" || hostGOOS == "windows" {
-		if hostGOOS == "darwin" || hostGOOS == "windows" {
-			return "docker-desktop-vm"
-		}
+func classifyIsolation(hostGOOS, _, _ string) string {
+	if hostGOOS == "darwin" || hostGOOS == "windows" {
+		return "docker-desktop-vm"
 	}
 	if hostGOOS == "linux" {
 		return "native-linux"
