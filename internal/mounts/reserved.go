@@ -4,22 +4,25 @@ import (
 	"fmt"
 	"path"
 	"strings"
+
+	"github.com/whaleshell/whaleshell-core/defaults"
 )
 
 // OpenShell-aligned guest reserved roots (whaleshell control plane + OCI runtime mounts).
 // Intentionally not a general Linux system-path denylist for host sources —
-// host workspace secrets use DenyBasenames / ResolveWorkspace instead.
+// host workspace secrets use denyBasenames / ResolveWorkspace instead.
 var (
-	// ControlRoots are in-guest paths owned by whaleshell (must not be user-mounted over).
-	ControlRoots = []string{
-		"/whaleshell",
-		"/etc/whaleshell",
+	// controlRoots are in-guest paths owned by whaleshell (must not be user-mounted over).
+	controlRoots = []string{
+		defaults.GuestRoot,
+		defaults.GuestEtcOSG,
 		"/run/whaleshell",
 		"/run/netns",
 		"/var/run/netns",
+		"/var/run/whaleshell",
 	}
-	// OCIRuntimeMountRoots must not be used as workspace or user bind targets.
-	OCIRuntimeMountRoots = []string{
+	// ociRuntimeMountRoots must not be used as workspace or user bind targets.
+	ociRuntimeMountRoots = []string{
 		"/proc", "/sys", "/dev",
 	}
 )
@@ -31,7 +34,7 @@ func ValidateContainerMountTarget(target string) error {
 		return err
 	}
 	p := path.Clean(normalized)
-	for _, reserved := range append(append([]string{}, ControlRoots...), OCIRuntimeMountRoots...) {
+	for _, reserved := range append(append([]string{}, controlRoots...), ociRuntimeMountRoots...) {
 		if pathsOverlap(p, path.Clean(reserved)) {
 			return fmt.Errorf("mount target %q conflicts with reserved path %q", target, reserved)
 		}

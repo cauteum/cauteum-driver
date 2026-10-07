@@ -2,6 +2,18 @@ package docker
 
 import "testing"
 
+func TestCapabilitiesDescribeBackendFeatures(t *testing.T) {
+	if got := (&Driver{}).capabilities(); len(got) != 1 || got[0] != "cdi" {
+		t.Fatalf("default capabilities=%v", got)
+	}
+	d := &Driver{runtimeConfig: RuntimeConfig{Capabilities: []string{"cdi", "libpod-native"}}}
+	got := d.capabilities()
+	got[0] = "mutated"
+	if d.runtimeConfig.Capabilities[0] != "cdi" {
+		t.Fatal("capabilities leaked runtime config backing storage")
+	}
+}
+
 func TestClassifyIsolation(t *testing.T) {
 	cases := []struct {
 		host, os, osType, want string

@@ -1,9 +1,12 @@
 package sidecar
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/whaleshell/whaleshell-core/defaults"
 )
@@ -32,5 +35,38 @@ func TestCABundleEnvIncludesGit(t *testing.T) {
 		if !slices.Contains(keys, k) {
 			t.Fatalf("missing %s in %v", k, keys)
 		}
+	}
+}
+
+func TestNeedsLinuxRebuildMissingSourceTree(t *testing.T) {
+	t.Setenv("WHALESHELL_REBUILD_CLI", "")
+	t.Setenv("WHALESHELL_REBUILD_INIT", "")
+	dir := t.TempDir()
+	binary := filepath.Join(dir, "binary")
+	if err := os.WriteFile(binary, []byte("cached"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if !needsLinuxRebuild(binary, filepath.Join(dir, "missing")) {
+		t.Fatal("missing source tree must invalidate the cache")
+	}
+}
+
+func TestNeedsLinuxRebuildChangedSource(t *testing.T) {
+	t.Setenv("WHALESHELL_REBUILD_CLI", "")
+	t.Setenv("WHALESHELL_REBUILD_INIT", "")
+	dir := t.TempDir()
+	binary := filepath.Join(dir, "binary")
+	if err := os.WriteFile(binary, []byte("cached"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "main.go"), []byte("package main"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	past := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(binary, past, past); err != nil {
+		t.Fatal(err)
+	}
+	if !needsLinuxRebuild(binary, dir) {
+		t.Fatal("changed source must invalidate the cache")
 	}
 }

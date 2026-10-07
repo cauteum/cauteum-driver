@@ -60,7 +60,7 @@ func needsLinuxRebuild(out, moduleDir string) bool {
 	}
 	// Rebuild when CLI sources change (cached linux binary otherwise stays stale).
 	newer := false
-	_ = filepath.WalkDir(moduleDir, func(path string, d os.DirEntry, err error) error {
+	walkErr := filepath.WalkDir(moduleDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil || newer {
 			return err
 		}
@@ -76,7 +76,7 @@ func needsLinuxRebuild(out, moduleDir string) bool {
 		}
 		info, err := d.Info()
 		if err != nil {
-			return nil
+			return err
 		}
 		if info.ModTime().After(outTime) {
 			newer = true
@@ -84,7 +84,8 @@ func needsLinuxRebuild(out, moduleDir string) bool {
 		}
 		return nil
 	})
-	return newer
+	// An unreadable source tree cannot establish that the cached binary is current.
+	return newer || walkErr != nil
 }
 
 // EnsureLinuxInit builds (if needed) a linux/$GOARCH whaleshell-init for guest harden.
@@ -112,7 +113,9 @@ func EnsureLinuxInit(ctx context.Context, runtimeModuleDir string) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("sidecar: cross-compile linux whaleshell-init: %w\n%s", err, strings.TrimSpace(string(b)))
 	}
-	_ = os.Chmod(out, 0o755)
+	if err := os.Chmod(out, 0o755); err != nil {
+		return "", fmt.Errorf("sidecar: make binary executable: %w", err)
+	}
 	return out, nil
 }
 
@@ -150,7 +153,9 @@ func ensureLinuxCmd(ctx context.Context, runtimeModuleDir, name, pkg string) (st
 	if err != nil {
 		return "", fmt.Errorf("sidecar: cross-compile linux %s: %w\n%s", name, err, strings.TrimSpace(string(b)))
 	}
-	_ = os.Chmod(out, 0o755)
+	if err := os.Chmod(out, 0o755); err != nil {
+		return "", fmt.Errorf("sidecar: make binary executable: %w", err)
+	}
 	return out, nil
 }
 

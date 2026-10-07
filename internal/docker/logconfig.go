@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 package docker
 
@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
 )
 
 const (

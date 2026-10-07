@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
+	"github.com/moby/moby/client"
 )
 
 // PolicyHostPath returns the host path of the sandbox policy bind (label whaleshell.policy_path).
@@ -16,27 +15,27 @@ func (d *Driver) PolicyHostPath(ctx context.Context, nameOrID string) (string, e
 	}
 	name := sanitizeName(nameOrID)
 	for _, ctr := range []string{"whaleshell-proxy-" + name, "whaleshell-" + name} {
-		ins, err := d.cli.ContainerInspect(ctx, ctr)
+		ins, err := d.cli.ContainerInspect(ctx, ctr, client.ContainerInspectOptions{})
 		if err != nil {
 			continue
 		}
-		if p := strings.TrimSpace(ins.Config.Labels[labelPolicy]); p != "" {
+		if p := strings.TrimSpace(ins.Container.Config.Labels[labelPolicy]); p != "" {
 			return p, nil
 		}
-		for _, m := range ins.Mounts {
+		for _, m := range ins.Container.Mounts {
 			if m.Destination == "/whaleshell/policy.yaml" && m.Source != "" {
 				return m.Source, nil
 			}
 		}
 	}
-	f := filters.NewArgs()
+	f := client.Filters{}
 	f.Add("label", labelSandbox+"=1")
 	f.Add("label", labelName+"="+name)
-	list, err := d.cli.ContainerList(ctx, container.ListOptions{All: true, Filters: f})
+	list, err := d.cli.ContainerList(ctx, client.ContainerListOptions{All: true, Filters: f})
 	if err != nil {
 		return "", fmt.Errorf("docker policy path: %w", err)
 	}
-	for _, c := range list {
+	for _, c := range list.Items {
 		if p := strings.TrimSpace(c.Labels[labelPolicy]); p != "" {
 			return p, nil
 		}

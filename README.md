@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/whaleshell/whaleshell-driver/actions/workflows/ci.yml"><img src="https://github.com/whaleshell/whaleshell-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://pkg.go.dev/github.com/whaleshell/whaleshell-driver"><img src="https://pkg.go.dev/badge/github.com/whaleshell/whaleshell-driver.svg" alt="Go Reference"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/whaleshell/whaleshell-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
@@ -17,6 +17,8 @@
 ---
 
 ## Overview
+
+Backend setup and runtime limits are maintained in the [Docker](https://whaleshell.github.io/providers/docker/) and [Podman](https://whaleshell.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://whaleshell.github.io/reference/openshell-compatibility/) records the current comparison scope.
 
 **whaleshell-driver** implements `ComputeDriver` for whaleshell: create/start/exec/delete containers, attach the egress sidecar, validate bind mounts, and inject OpenShell-style host-gateway aliases (`host.whaleshell.internal`).
 
@@ -34,11 +36,14 @@
 
 ## Installation
 
-```bash
-go get github.com/whaleshell/whaleshell-driver@latest
-```
+Develop this module in the sibling `go.work` workspace; run `go test ./...` from this checkout. The published alpha module path does not yet support a clean standalone `go get`.
 
-**Requirements:** Go 1.27+, Docker Engine API access.
+**Requirements:** Go 1.27+, Docker-compatible Engine API 1.40 or newer.
+
+The driver uses the separate Moby `client` and `api` SDK modules pinned in
+`go.mod`. API negotiation is enabled by default; Docker configuration uses
+`DOCKER_*`, while Podman selects its compatible socket. SDK dependency checks
+cover the client code; keep the Engine daemon updated independently.
 
 ---
 
@@ -86,4 +91,4 @@ _ = hosts
 
 ## License
 
-[MIT](./LICENSE) © whaleshell
+[Apache-2.0](./LICENSE) © whaleshell
