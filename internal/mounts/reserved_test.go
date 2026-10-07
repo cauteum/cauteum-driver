@@ -16,6 +16,9 @@ func TestValidateContainerMountTarget(t *testing.T) {
 		{"/sys/fs", false},
 		{"/dev/null", false},
 		{"/run/whaleshell/ssh.sock", false},
+		{"/run", false},
+		{"/etc/whaleshell", false},
+		{"/var/run/whaleshell", false},
 		{"relative", false},
 		{"/workspace/../whaleshell", false}, // has ..
 	}

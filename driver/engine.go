@@ -12,6 +12,7 @@ type Probe struct {
 	Context         string
 	Isolation       string
 	HostGOOS        string
+	Capabilities    []string
 	Error           string
 }
 
@@ -24,4 +25,11 @@ type Engine interface {
 	RunProbe(ctx context.Context, initBin string) (string, error)
 	PolicyHostPath(ctx context.Context, nameOrID string) (string, error)
 	ContainerIP(ctx context.Context, containerID, networkName string) (string, error)
+}
+
+// RootfsTarStager is an optional capability exposed by drivers that accept a
+// gateway-owned local rootfs tar archive. Docker and Podman intentionally do
+// not implement this interface; callers must fail closed when it is absent.
+type RootfsTarStager interface {
+	RootfsTarStaging(ctx context.Context) (directory string, maxBytes uint64, err error)
 }

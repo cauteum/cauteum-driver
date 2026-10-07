@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/whaleshell/whaleshell-driver/driver"
@@ -22,5 +24,50 @@ func TestDeviceRequestsForGPU(t *testing.T) {
 	reqs = DeviceRequestsForGPU(driver.Spec{GPU: true})
 	if len(reqs[0].DeviceIDs) != 2 {
 		t.Fatalf("env ids=%v", reqs[0].DeviceIDs)
+	}
+}
+
+func TestValidateGPURequestRequiresMatchingExplicitInventory(t *testing.T) {
+	if err := ValidateGPURequest(driver.Spec{GPUCount: 2, CDIDevices: []string{"nvidia.com/gpu=0"}}); err == nil {
+		t.Fatal("accepted mismatched GPU count")
+	}
+	if err := ValidateGPURequest(driver.Spec{GPUCount: 2, CDIDevices: []string{"nvidia.com/gpu=0", "nvidia.com/gpu=1"}}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestValidateGPURequestRejectsDevicesWithoutGPURequest(t *testing.T) {
+	if err := ValidateGPURequest(driver.Spec{CDIDevices: []string{"nvidia.com/gpu=0"}}); err == nil {
+		t.Fatal("accepted CDI devices without GPU request")
+	}
+}
+
+func TestLocalCDIDevicesAreSelectedInNumericOrder(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"nvidia10", "nvidia2", "nvidia0", "nvidiactl"} {
+		if err := os.WriteFile(filepath.Join(root, name), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := localCDIDevices(root)
+	want := []string{"nvidia.com/gpu=0", "nvidia.com/gpu=2", "nvidia.com/gpu=10"}
+	if len(got) != len(want) {
+		t.Fatalf("devices=%v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("devices=%v, want %v", got, want)
+		}
+	}
+}
+
+func TestLocalCDIDevicesUsesAggregateSelectorForDXG(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "dxg"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got := localCDIDevices(root)
+	if len(got) != 1 || got[0] != defaultCDIDevice {
+		t.Fatalf("DXG devices=%v, want [%s]", got, defaultCDIDevice)
 	}
 }

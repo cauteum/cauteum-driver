@@ -5,6 +5,7 @@ import (
 
 	"github.com/docker/go-units"
 
+	"github.com/whaleshell/whaleshell-core/defaults"
 	"github.com/whaleshell/whaleshell-driver/internal/mounts"
 	"github.com/whaleshell/whaleshell-driver/internal/sidecar"
 )
@@ -25,7 +26,7 @@ func ParseMemoryBytes(s string) (int64, error) {
 // HostGatewayExtraHosts maps host-gateway aliases into containers.
 func HostGatewayExtraHosts() []string {
 	return []string{
-		"host.whaleshell.internal:host-gateway",
+		defaults.HostInternal + ":host-gateway",
 		"host.docker.internal:host-gateway",
 	}
 }

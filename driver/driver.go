@@ -9,6 +9,10 @@ import (
 	"github.com/whaleshell/whaleshell-core"
 )
 
+// SupervisorControlSocketName is mounted inside the shared SSH directory so
+// sandbox PID 1 can request lifecycle RPCs through the authenticated sidecar.
+const SupervisorControlSocketName = "supervisor-control.sock"
+
 // Spec describes a sandbox to create.
 type Spec struct {
 	Name      string   // human name → container whaleshell-<name>
@@ -28,6 +32,9 @@ type Spec struct {
 	// Harden (P4): linux whaleshell-init binary mounted at /whaleshell/whaleshell-init; execs are wrapped.
 	InitBin  string
 	NoHarden bool
+	// SupervisorBin is the Go workload supervisor used as the container entrypoint.
+	// It manages signals and child reaping; InitBin remains the hardened workload wrapper.
+	SupervisorBin string
 
 	// Display (P6): noVNC published on host loopback only.
 	DisplayMode     string // none | novnc
@@ -46,9 +53,11 @@ type Spec struct {
 	// PersistVolume mounts named volume whaleshell-data-<name> at defaults.GuestData (retained across stop/start).
 	PersistVolume bool
 
-	// EnableSSH mounts whaleshell-sshd and shares its root-only Unix socket
-	// (defaults.GuestSSHSocket) with the proxy sidecar, which relays it to the
-	// gateway. Nothing is published on the host; requires ProxyBin.
+	// EnableSSH mounts whaleshell-sshd and shares the root-only relay volume
+	// (defaults.GuestSSHSocket and sandbox TCP dial socket) with the proxy
+	// sidecar. SSH uses the Unix socket directly; loopback TCP targets are dialed
+	// in the sandbox namespace by whaleshell-supervisor. Nothing is host-published;
+	// requires ProxyBin.
 	EnableSSH bool
 	SSHBin    string // host path to linux whaleshell-sshd
 
@@ -66,7 +75,7 @@ type Spec struct {
 	// ProxyImage overrides the slim egress sidecar base (default debian:bookworm-slim).
 	ProxyImage   string
 	PublishPorts []PortPublish
-	// DriverConfigJSON is opaque driver-specific JSON (recorded as label; Docker ignores for now).
+	// DriverConfigJSON carries the selected backend's OpenShell-compatible sandbox driver_config.
 	DriverConfigJSON string
 }
 

@@ -1,7 +1,7 @@
 // Package mounts validates host bind mounts and guest mount targets.
 //
-// Host workspace sources use a deny-list (DenyBasenames / $HOME) unless --i-know.
-// Guest targets use OpenShell-style reserved roots (ControlRoots) so users cannot
+// Host workspace sources use a deny-list (denyBasenames / $HOME) unless --i-know.
+// Guest targets use OpenShell-style reserved roots (controlRoots) so users cannot
 // overwrite /whaleshell control state — not a general Linux system-path denylist.
 package mounts
 
@@ -10,15 +10,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/whaleshell/whaleshell-core/defaults"
 )
 
 // WorkdirInContainer is where the host workspace is mounted.
-const WorkdirInContainer = "/workspace"
+const WorkdirInContainer = defaults.GuestWorkspace
 
-// DenyBasenames are never auto-mounted as workspace (secrets / cloud CLIs).
+// denyBasenames are never auto-mounted as workspace (secrets / cloud CLIs).
 // OpenShell relies more on --upload; whaleshell still bind-mounts workspace, so this
 // host-side check remains as hardening.
-var DenyBasenames = []string{
+var denyBasenames = []string{
 	".ssh", ".aws", ".gnupg", ".kube", ".docker", ".config",
 	".cursor", ".codex", ".claude",
 }
@@ -33,7 +35,11 @@ func ResolveWorkspace(path string, iKnow bool) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("workspace: %w", err)
 	}
-	fi, err := os.Stat(abs)
+	canonical, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", fmt.Errorf("workspace: resolve path: %w", err)
+	}
+	fi, err := os.Stat(canonical)
 	if err != nil {
 		return "", fmt.Errorf("workspace: %w", err)
 	}
@@ -41,7 +47,7 @@ func ResolveWorkspace(path string, iKnow bool) (string, error) {
 		return "", fmt.Errorf("workspace: not a directory: %s", abs)
 	}
 	if !iKnow {
-		if err := checkDeny(abs); err != nil {
+		if err := checkDeny(canonical); err != nil {
 			return "", err
 		}
 	}
@@ -49,7 +55,10 @@ func ResolveWorkspace(path string, iKnow bool) (string, error) {
 }
 
 func checkDeny(abs string) error {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("workspace: determine home directory for mount validation: %w", err)
+	}
 	home = filepath.Clean(home)
 	abs = filepath.Clean(abs)
 
@@ -57,14 +66,14 @@ func checkDeny(abs string) error {
 		return fmt.Errorf("workspace: refusing to mount $HOME (%s); use a project dir, --upload, or --i-know", abs)
 	}
 	base := filepath.Base(abs)
-	for _, d := range DenyBasenames {
+	for _, d := range denyBasenames {
 		if strings.EqualFold(base, d) {
 			return fmt.Errorf("workspace: refusing to mount %q (%s); pass --i-know to override", d, abs)
 		}
 	}
 	// Also refuse if path is under ~/.ssh etc.
 	if home != "" {
-		for _, d := range DenyBasenames {
+		for _, d := range denyBasenames {
 			prefix := filepath.Join(home, d)
 			if abs == prefix || strings.HasPrefix(abs, prefix+string(os.PathSeparator)) {
 				return fmt.Errorf("workspace: refusing path under ~/%s (%s); pass --i-know to override", d, abs)
