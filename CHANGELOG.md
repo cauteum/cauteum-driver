@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.1.0-beta.1] - 2026-10-08
+
+### Changed
+
+- Classify Docker Desktop isolation from the host platform instead of daemon-provided labels.
+- Use platform-specific supervisor executable checks and keep POSIX file-mode tests off Windows.
+- Update the core dependency to v0.1.0-beta.1.
+
 ## [Unreleased]
 
 ## [v0.1.0-alpha.2] - 2026-10-07
