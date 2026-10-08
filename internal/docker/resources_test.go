@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package docker
@@ -6,7 +6,7 @@ package docker
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-core/defaults"
 )
 
 func TestResolveProxyImage(t *testing.T) {

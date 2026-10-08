@@ -5,9 +5,9 @@ import (
 
 	"github.com/docker/go-units"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-driver/internal/mounts"
-	"github.com/whaleshell/whaleshell-driver/internal/sidecar"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-driver/internal/mounts"
+	"github.com/cauteum/cauteum-driver/internal/sidecar"
 )
 
 // WorkdirInContainer is where the host workspace is mounted in the guest.
@@ -42,22 +42,22 @@ func ResolveWorkspace(path string, iKnow bool) (string, error) {
 	return mounts.ResolveWorkspace(path, iKnow)
 }
 
-// EnsureLinuxCLI builds (if needed) a linux/$GOARCH whaleshell binary for the proxy sidecar.
+// EnsureLinuxCLI builds (if needed) a linux/$GOARCH cauteum binary for the proxy sidecar.
 func EnsureLinuxCLI(ctx context.Context, moduleDir string) (string, error) {
 	return sidecar.EnsureLinuxCLI(ctx, moduleDir)
 }
 
-// EnsureLinuxInit builds (if needed) a linux whaleshell-init for harden.
+// EnsureLinuxInit builds (if needed) a linux cauteum-init for harden.
 func EnsureLinuxInit(ctx context.Context, runtimeModuleDir string) (string, error) {
 	return sidecar.EnsureLinuxInit(ctx, runtimeModuleDir)
 }
 
-// EnsureLinuxSSHD builds (if needed) a linux whaleshell-sshd.
+// EnsureLinuxSSHD builds (if needed) a linux cauteum-sshd.
 func EnsureLinuxSSHD(ctx context.Context, runtimeModuleDir string) (string, error) {
 	return sidecar.EnsureLinuxSSHD(ctx, runtimeModuleDir)
 }
 
-// EnsureLinuxAgent builds (if needed) a linux whaleshell-agent.
+// EnsureLinuxAgent builds (if needed) a linux cauteum-agent.
 func EnsureLinuxAgent(ctx context.Context, runtimeModuleDir string) (string, error) {
 	return sidecar.EnsureLinuxAgent(ctx, runtimeModuleDir)
 }

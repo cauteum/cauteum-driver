@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cauteum/cauteum-driver/driver"
+	docker "github.com/cauteum/cauteum-driver/internal/docker"
+	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
 	"github.com/moby/moby/client"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	docker "github.com/whaleshell/whaleshell-driver/internal/docker"
-	"github.com/whaleshell/whaleshell-driver/tests/internal/testenv"
 )
 
 func TestDockerDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
@@ -24,7 +24,7 @@ func TestDockerDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
 
 	engine := docker.NewFromClientWithRuntimeConfig(engineClient, docker.RuntimeConfig{
 		ImagePullPolicy: "missing",
-		NetworkName:     "whaleshell-testcontainers",
+		NetworkName:     "cauteum-testcontainers",
 	})
 	defer engine.Close()
 
@@ -38,7 +38,7 @@ func TestDockerDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
 		CPU:              0.25,
 		MemoryBytes:      128 * 1024 * 1024,
 		PidsLimit:        64,
-		DriverConfigJSON: `{"mounts":[{"type":"volume","source":"whaleshell-testcontainers-docker-data","target":"/persist","read_only":false},{"type":"volume","source":"whaleshell-testcontainers-docker-readonly","target":"/readonly","read_only":true},{"type":"tmpfs","target":"/scratch","size_bytes":4096,"read_only":false}]}`,
+		DriverConfigJSON: `{"mounts":[{"type":"volume","source":"cauteum-testcontainers-docker-data","target":"/persist","read_only":false},{"type":"volume","source":"cauteum-testcontainers-docker-readonly","target":"/readonly","read_only":true},{"type":"tmpfs","target":"/scratch","size_bytes":4096,"read_only":false}]}`,
 	})
 	if err != nil {
 		t.Fatalf("create sandbox through Docker driver: %v", err)
@@ -100,7 +100,7 @@ func TestDockerDriverRecoversAfterDaemonRestart(t *testing.T) {
 
 	engine := docker.NewFromClientWithRuntimeConfig(engineClient, docker.RuntimeConfig{
 		ImagePullPolicy: "missing",
-		NetworkName:     "whaleshell-testcontainers-recovery",
+		NetworkName:     "cauteum-testcontainers-recovery",
 	})
 	defer engine.Close()
 

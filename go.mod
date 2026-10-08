@@ -1,4 +1,4 @@
-module github.com/whaleshell/whaleshell-driver
+module github.com/cauteum/cauteum-driver
 
 go 1.27.0
 
@@ -7,7 +7,7 @@ require (
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.1
 	github.com/testcontainers/testcontainers-go v0.44.0
-	github.com/whaleshell/whaleshell-core v0.1.0-beta.1
+	github.com/cauteum/cauteum-core v0.1.0-beta.1
 	golang.org/x/term v0.46.0
 )
 

@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cauteum/cauteum-driver/internal/mounts"
 	enginemount "github.com/moby/moby/api/types/mount"
-	"github.com/whaleshell/whaleshell-driver/internal/mounts"
 )
 
 func parseDockerSandboxDriverConfig(raw string, enableBindMounts bool) ([]string, bool, []enginemount.Mount, []string, error) {

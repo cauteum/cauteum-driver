@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cauteum/cauteum-driver/driver"
+	docker "github.com/cauteum/cauteum-driver/internal/docker"
+	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
 	"github.com/moby/moby/client"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	docker "github.com/whaleshell/whaleshell-driver/internal/docker"
-	"github.com/whaleshell/whaleshell-driver/tests/internal/testenv"
 )
 
 func TestDockerPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
@@ -21,13 +21,13 @@ func TestDockerPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cli.Close()
-	engine := docker.NewFromClientWithRuntimeConfig(cli, docker.RuntimeConfig{ImagePullPolicy: "never", NetworkName: "whaleshell-pull-policy"})
+	engine := docker.NewFromClientWithRuntimeConfig(cli, docker.RuntimeConfig{ImagePullPolicy: "never", NetworkName: "cauteum-pull-policy"})
 	defer engine.Close()
-	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/whaleshell/missing:never", Workspace: "/tmp", NoHarden: true})
+	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/cauteum/missing:never", Workspace: "/tmp", NoHarden: true})
 	if err == nil || !strings.Contains(err.Error(), "image_pull_policy is never") {
 		t.Fatalf("never policy error=%v", err)
 	}
-	if _, err := cli.NetworkInspect(ctx, "whaleshell-pull-policy-never-missing", client.NetworkInspectOptions{}); err == nil {
+	if _, err := cli.NetworkInspect(ctx, "cauteum-pull-policy-never-missing", client.NetworkInspectOptions{}); err == nil {
 		t.Fatal("never policy created a network before rejecting missing image")
 	}
 }
@@ -50,7 +50,7 @@ func TestDockerPullPolicySupportsDigestPinnedImage(t *testing.T) {
 	if err != nil || len(image.RepoDigests) == 0 {
 		t.Fatalf("inspect pulled image digests=%v err=%v", image.RepoDigests, err)
 	}
-	engine := docker.NewFromClientWithRuntimeConfig(cli, docker.RuntimeConfig{ImagePullPolicy: "missing", NetworkName: "whaleshell-digest"})
+	engine := docker.NewFromClientWithRuntimeConfig(cli, docker.RuntimeConfig{ImagePullPolicy: "missing", NetworkName: "cauteum-digest"})
 	defer engine.Close()
 	handle, err := engine.Create(ctx, driver.Spec{Name: "digest-pinned", Image: image.RepoDigests[0], Workspace: "/tmp", Command: []string{"sleep", "30"}, NoHarden: true})
 	if err != nil {

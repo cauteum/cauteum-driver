@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-driver/driver"
+	"github.com/cauteum/cauteum-driver/driver"
 )
 
 func TestStubCreate(t *testing.T) {

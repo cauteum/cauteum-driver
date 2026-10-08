@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cauteum/cauteum-driver/driver"
+	podman "github.com/cauteum/cauteum-driver/internal/podman"
+	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
 	"github.com/moby/moby/client"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	podman "github.com/whaleshell/whaleshell-driver/internal/podman"
-	"github.com/whaleshell/whaleshell-driver/tests/internal/testenv"
 )
 
 func TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
@@ -22,16 +22,16 @@ func TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer cli.Close()
-	engine, err := podman.NewWithConfig(podman.Config{ImagePullPolicy: "never", UsernsMode: "host", NetworkName: "whaleshell-pull-policy"})
+	engine, err := podman.NewWithConfig(podman.Config{ImagePullPolicy: "never", UsernsMode: "host", NetworkName: "cauteum-pull-policy"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer engine.Close()
-	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/whaleshell/missing:never", Workspace: "/tmp", NoHarden: true})
+	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/cauteum/missing:never", Workspace: "/tmp", NoHarden: true})
 	if err == nil || !strings.Contains(err.Error(), "image_pull_policy is never") {
 		t.Fatalf("never policy error=%v", err)
 	}
-	if _, err := cli.NetworkInspect(ctx, "whaleshell-pull-policy-never-missing", client.NetworkInspectOptions{}); err == nil {
+	if _, err := cli.NetworkInspect(ctx, "cauteum-pull-policy-never-missing", client.NetworkInspectOptions{}); err == nil {
 		t.Fatal("never policy created a network before rejecting missing image")
 	}
 }
@@ -55,7 +55,7 @@ func TestPodmanPullPolicySupportsDigestPinnedImage(t *testing.T) {
 	if err != nil || len(image.RepoDigests) == 0 {
 		t.Fatalf("inspect pulled image digests=%v err=%v", image.RepoDigests, err)
 	}
-	engine, err := podman.NewWithConfig(podman.Config{ImagePullPolicy: "missing", UsernsMode: "host", NetworkName: "whaleshell-digest"})
+	engine, err := podman.NewWithConfig(podman.Config{ImagePullPolicy: "missing", UsernsMode: "host", NetworkName: "cauteum-digest"})
 	if err != nil {
 		t.Fatal(err)
 	}

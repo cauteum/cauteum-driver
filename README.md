@@ -1,26 +1,26 @@
-<h1 align="center">whaleshell-driver</h1>
+<h1 align="center">cauteum-driver</h1>
 
 <p align="center">
   <strong>Compute drivers</strong><br>
   Docker-first sandbox runtime — mounts, ExtraHosts, egress sidecar wiring.
 </p>
 <p align="center">
-  <a href="https://github.com/whaleshell/whaleshell-driver/actions/workflows/ci.yml"><img src="https://github.com/whaleshell/whaleshell-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pkg.go.dev/github.com/whaleshell/whaleshell-driver"><img src="https://pkg.go.dev/badge/github.com/whaleshell/whaleshell-driver.svg" alt="Go Reference"></a>
+  <a href="https://github.com/cauteum/cauteum-driver/actions/workflows/ci.yml"><img src="https://github.com/cauteum/cauteum-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pkg.go.dev/github.com/cauteum/cauteum-driver"><img src="https://pkg.go.dev/badge/github.com/cauteum/cauteum-driver.svg" alt="Go Reference"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/whaleshell/whaleshell-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
+  <a href="https://github.com/cauteum/cauteum-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
-  <sub>Part of the <a href="https://github.com/whaleshell">whaleshell / whaleshell</a> ecosystem</sub>
+  <sub>Part of the <a href="https://github.com/cauteum">cauteum / cauteum</a> ecosystem</sub>
 </p>
 
 ---
 
 ## Overview
 
-Backend setup and runtime limits are maintained in the [Docker](https://whaleshell.github.io/providers/docker/) and [Podman](https://whaleshell.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://whaleshell.github.io/reference/openshell-compatibility/) records the current comparison scope.
+Backend setup and runtime limits are maintained in the [Docker](https://cauteum.github.io/providers/docker/) and [Podman](https://cauteum.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://cauteum.github.io/reference/openshell-compatibility/) records the current comparison scope.
 
-**whaleshell-driver** implements `ComputeDriver` for whaleshell: create/start/exec/delete containers, attach the egress sidecar, validate bind mounts, and inject OpenShell-style host-gateway aliases (`host.whaleshell.internal`).
+**cauteum-driver** implements `ComputeDriver` for cauteum: create/start/exec/delete containers, attach the egress sidecar, validate bind mounts, and inject OpenShell-style host-gateway aliases (`host.cauteum.internal`).
 
 ### Key Features
 
@@ -28,7 +28,7 @@ Backend setup and runtime limits are maintained in the [Docker](https://whaleshe
 |----------|--------------|
 | **Docker** | Engine API create/exec/logs (Podman-compatible socket) |
 | **Sidecar** | Proxy container on dual-home network + CA bundle env |
-| **Hosts** | `HostGatewayExtraHosts()` → `host.whaleshell.internal` / `host.docker.internal` |
+| **Hosts** | `HostGatewayExtraHosts()` → `host.cauteum.internal` / `host.docker.internal` |
 | **Mounts** | Workdir + reserved system paths validation |
 | **Stubs** | VM / K8s placeholders for future drivers |
 
@@ -51,15 +51,15 @@ cover the client code; keep the Engine daemon updated independently.
 
 ```go
 import (
-    "github.com/whaleshell/whaleshell-driver/driver"
-    _ "github.com/whaleshell/whaleshell-driver/driver/all" // register backends
+    "github.com/cauteum/cauteum-driver/driver"
+    _ "github.com/cauteum/cauteum-driver/driver/all" // register backends
 )
 
 d, err := driver.OpenEngine("docker")
 _ = d
 _ = err
 hosts := driver.HostGatewayExtraHosts()
-// []string{"host.whaleshell.internal:host-gateway", "host.docker.internal:host-gateway"}
+// []string{"host.cauteum.internal:host-gateway", "host.docker.internal:host-gateway"}
 _ = hosts
 ```
 
@@ -85,10 +85,10 @@ _ = hosts
 | Resource | Link |
 |----------|------|
 | Roadmap | [ROADMAP.md](./ROADMAP.md) |
-| Organization | [https://github.com/whaleshell](https://github.com/whaleshell) |
-| Organization overview | [github.com/whaleshell](https://github.com/whaleshell) |
-| pkg.go.dev | [`github.com/whaleshell/whaleshell-driver`](https://pkg.go.dev/github.com/whaleshell/whaleshell-driver) |
+| Organization | [https://github.com/cauteum](https://github.com/cauteum) |
+| Organization overview | [github.com/cauteum](https://github.com/cauteum) |
+| pkg.go.dev | [`github.com/cauteum/cauteum-driver`](https://pkg.go.dev/github.com/cauteum/cauteum-driver) |
 
 ## License
 
-[Apache-2.0](./LICENSE) © whaleshell
+[Apache-2.0](./LICENSE) © cauteum

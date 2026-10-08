@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-core/defaults"
 )
 
 func TestCABundleEnvIncludesGit(t *testing.T) {
@@ -39,8 +39,8 @@ func TestCABundleEnvIncludesGit(t *testing.T) {
 }
 
 func TestNeedsLinuxRebuildMissingSourceTree(t *testing.T) {
-	t.Setenv("WHALESHELL_REBUILD_CLI", "")
-	t.Setenv("WHALESHELL_REBUILD_INIT", "")
+	t.Setenv("CAUTEUM_REBUILD_CLI", "")
+	t.Setenv("CAUTEUM_REBUILD_INIT", "")
 	dir := t.TempDir()
 	binary := filepath.Join(dir, "binary")
 	if err := os.WriteFile(binary, []byte("cached"), 0o755); err != nil {
@@ -52,8 +52,8 @@ func TestNeedsLinuxRebuildMissingSourceTree(t *testing.T) {
 }
 
 func TestNeedsLinuxRebuildChangedSource(t *testing.T) {
-	t.Setenv("WHALESHELL_REBUILD_CLI", "")
-	t.Setenv("WHALESHELL_REBUILD_INIT", "")
+	t.Setenv("CAUTEUM_REBUILD_CLI", "")
+	t.Setenv("CAUTEUM_REBUILD_INIT", "")
 	dir := t.TempDir()
 	binary := filepath.Join(dir, "binary")
 	if err := os.WriteFile(binary, []byte("cached"), 0o755); err != nil {

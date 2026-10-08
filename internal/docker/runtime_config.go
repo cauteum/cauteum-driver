@@ -2,7 +2,7 @@ package docker
 
 import (
 	"fmt"
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-core/defaults"
 	"net"
 	"os"
 	"path/filepath"
@@ -13,7 +13,7 @@ import (
 func providerWorkloadSocket(env []string) (string, error) {
 	for _, entry := range env {
 		key, value, ok := strings.Cut(entry, "=")
-		if !ok || key != "WHALESHELL_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET" {
+		if !ok || key != "CAUTEUM_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET" {
 			continue
 		}
 		value = strings.TrimSpace(strings.TrimPrefix(value, "unix://"))
@@ -40,7 +40,7 @@ func (d *Driver) hostGatewayExtraHosts() []string {
 	if net.ParseIP(ip) == nil {
 		return HostGatewayExtraHosts()
 	}
-	return []string{"host.whaleshell.internal:" + ip, "host.docker.internal:" + ip}
+	return []string{"host.cauteum.internal:" + ip, "host.docker.internal:" + ip}
 }
 
 func (d *Driver) configuredPidsLimit(spec int64) int64 {
@@ -82,13 +82,13 @@ func (d *Driver) upstreamProxyEnv() []string {
 		"http_proxy=" + cfg.UpstreamProxyURL,
 		"NO_PROXY=" + cfg.UpstreamProxyNoProxy,
 		"no_proxy=" + cfg.UpstreamProxyNoProxy,
-		"WHALESHELL_PROXY_CONNECT_BY_HOSTNAME=" + strconv.FormatBool(cfg.UpstreamProxyConnectByHostname),
+		"CAUTEUM_PROXY_CONNECT_BY_HOSTNAME=" + strconv.FormatBool(cfg.UpstreamProxyConnectByHostname),
 	}
 	if cfg.UpstreamProxyAuthFile != "" {
-		env = append(env, "WHALESHELL_PROXY_AUTH_FILE=/run/whaleshell/upstream-proxy/auth")
+		env = append(env, "CAUTEUM_PROXY_AUTH_FILE=/run/cauteum/upstream-proxy/auth")
 	}
 	if cfg.UpstreamProxyCABundle != "" {
-		env = append(env, "WHALESHELL_PROXY_CA_BUNDLE=/run/whaleshell/upstream-proxy/ca.pem")
+		env = append(env, "CAUTEUM_PROXY_CA_BUNDLE=/run/cauteum/upstream-proxy/ca.pem")
 	}
 	return env
 }

@@ -1,6 +1,6 @@
 package vm
 
-import "github.com/whaleshell/whaleshell-driver/driver"
+import "github.com/cauteum/cauteum-driver/driver"
 
 func init() {
 	driver.Register("vm", func() (driver.ComputeDriver, error) {

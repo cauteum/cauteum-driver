@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	docker "github.com/whaleshell/whaleshell-driver/internal/docker"
+	docker "github.com/cauteum/cauteum-driver/internal/docker"
 )
 
 const defaultHealthCheckIntervalSecs int64 = 10

@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package docker
@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	envDockerLogDriver  = "WHALESHELL_DOCKER_LOG_DRIVER"
-	envDockerLogMaxSize = "WHALESHELL_DOCKER_LOG_MAX_SIZE"
-	envDockerLogMaxFile = "WHALESHELL_DOCKER_LOG_MAX_FILE"
+	envDockerLogDriver  = "CAUTEUM_DOCKER_LOG_DRIVER"
+	envDockerLogMaxSize = "CAUTEUM_DOCKER_LOG_MAX_SIZE"
+	envDockerLogMaxFile = "CAUTEUM_DOCKER_LOG_MAX_FILE"
 
 	defaultLogDriver  = "json-file"
 	defaultLogMaxSize = "10m"
@@ -27,9 +27,9 @@ const (
 //
 // Env:
 //
-//	WHALESHELL_DOCKER_LOG_DRIVER   — json-file (default) or none
-//	WHALESHELL_DOCKER_LOG_MAX_SIZE — json-file max-size (default 10m)
-//	WHALESHELL_DOCKER_LOG_MAX_FILE — json-file max-file (default 3)
+//	CAUTEUM_DOCKER_LOG_DRIVER   — json-file (default) or none
+//	CAUTEUM_DOCKER_LOG_MAX_SIZE — json-file max-size (default 10m)
+//	CAUTEUM_DOCKER_LOG_MAX_FILE — json-file max-file (default 3)
 func sandboxLogConfig() container.LogConfig {
 	driver := strings.ToLower(strings.TrimSpace(os.Getenv(envDockerLogDriver)))
 	if driver == "" {
