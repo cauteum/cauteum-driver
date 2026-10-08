@@ -3,11 +3,11 @@ module github.com/cauteum/cauteum-driver
 go 1.27.0
 
 require (
+	github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef
 	github.com/docker/go-units v0.5.0
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.1
 	github.com/testcontainers/testcontainers-go v0.44.0
-	github.com/cauteum/cauteum-core v0.1.0-beta.1
 	golang.org/x/term v0.46.0
 )
 
