@@ -67,8 +67,21 @@ jobs:
               mkdir -p /run/user/1000 /tmp/cauteum-rootless-workspace
               chown -R podman:podman /run/user/1000 /tmp/cauteum-rootless-workspace
               chmod 700 /run/user/1000
+              touch /tmp/cauteum-rootless-ready
               exec sleep infinity
             ' >/dev/null
+          ready=0
+          for _ in $(seq 1 30); do
+            if docker exec cauteum-podman-rootless test -f /tmp/cauteum-rootless-ready; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$ready" != "1" ]]; then
+            docker logs cauteum-podman-rootless >&2
+            exit 1
+          fi
           docker exec --user podman -d \
             -e HOME=/home/podman -e XDG_RUNTIME_DIR=/run/user/1000 \
             -e STORAGE_DRIVER=vfs cauteum-podman-rootless \
