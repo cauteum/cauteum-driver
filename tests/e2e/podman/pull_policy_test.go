@@ -15,7 +15,7 @@ import (
 
 func TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
 	ctx := testenv.RequireContainers(t)
-	_, endpoint := testenv.RunPodmanDaemon(ctx, t)
+	_, endpoint, workspace := testenv.RunPodmanDaemon(ctx, t)
 	t.Setenv("DOCKER_HOST", endpoint)
 	cli, err := client.New(client.WithHost(endpoint), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -27,7 +27,7 @@ func TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer engine.Close()
-	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/cauteum/missing:never", Workspace: "/tmp", NoHarden: true})
+	_, err = engine.Create(ctx, driver.Spec{Name: "never-missing", Image: "example.invalid/cauteum/missing:never", Workspace: workspace, NoHarden: true})
 	if err == nil || !strings.Contains(err.Error(), "image_pull_policy is never") {
 		t.Fatalf("never policy error=%v", err)
 	}
@@ -38,7 +38,7 @@ func TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate(t *testing.T) {
 
 func TestPodmanPullPolicySupportsDigestPinnedImage(t *testing.T) {
 	ctx := testenv.RequireContainers(t)
-	_, endpoint := testenv.RunPodmanDaemon(ctx, t)
+	_, endpoint, workspace := testenv.RunPodmanDaemon(ctx, t)
 	t.Setenv("DOCKER_HOST", endpoint)
 	cli, err := client.New(client.WithHost(endpoint), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -60,7 +60,7 @@ func TestPodmanPullPolicySupportsDigestPinnedImage(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer engine.Close()
-	handle, err := engine.Create(ctx, driver.Spec{Name: "digest-pinned", Image: image.RepoDigests[0], Workspace: "/tmp", Command: []string{"sleep", "30"}, NoHarden: true})
+	handle, err := engine.Create(ctx, driver.Spec{Name: "digest-pinned", Image: image.RepoDigests[0], Workspace: workspace, Command: []string{"sleep", "30"}, NoHarden: true})
 	if err != nil {
 		t.Fatalf("create digest-pinned sandbox: %v", err)
 	}

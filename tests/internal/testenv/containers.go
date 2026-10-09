@@ -3,6 +3,9 @@ package testenv
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -91,9 +94,17 @@ func RunDockerDaemon(ctx context.Context, t *testing.T) (testcontainers.Containe
 // RunPodmanDaemon starts a rootful Podman Docker-compatible API service in an
 // isolated privileged container. It is intentionally separate from the Docker
 // fixture because Podman has different storage and user-namespace semantics.
-func RunPodmanDaemon(ctx context.Context, t *testing.T) (testcontainers.Container, string) {
+func RunPodmanDaemon(ctx context.Context, t *testing.T) (testcontainers.Container, string, string) {
 	t.Helper()
-	container, err := testcontainers.Run(ctx, "quay.io/podman/stable:latest",
+	workspace, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatalf("resolve Podman fixture workspace: %v", err)
+	}
+	image := strings.TrimSpace(os.Getenv("CAUTEUM_TEST_PODMAN_IMAGE"))
+	if image == "" {
+		image = "quay.io/podman/stable:v5.8.7"
+	}
+	container, err := testcontainers.Run(ctx, image,
 		testcontainers.WithExposedPorts("18500/tcp"),
 		testcontainers.WithEnv(map[string]string{"STORAGE_DRIVER": "vfs"}),
 		testcontainers.WithHostConfigModifier(func(config *container.HostConfig) {
@@ -101,7 +112,7 @@ func RunPodmanDaemon(ctx context.Context, t *testing.T) (testcontainers.Containe
 		}),
 		// Keep the API endpoint stable while allowing recovery tests to kill
 		// and restart only the Podman service inside the fixture.
-		testcontainers.WithCmd("sh", "-lc", "printf 'root:100000:65536\\n' > /etc/subuid; printf 'root:100000:65536\\n' > /etc/subgid; while true; do podman system service --time=0 tcp:0.0.0.0:18500; sleep 2; done"),
+		testcontainers.WithCmd("sh", "-lc", "printf 'root:100000:65536\\n' > /etc/subuid; printf 'root:100000:65536\\n' > /etc/subgid; while true; do podman system service --time=0 tcp:0.0.0.0:18500 & pid=$!; echo $pid >/tmp/podman-service.pid; wait $pid; sleep 2; done"),
 		testcontainers.WithWaitStrategy(wait.ForListeningPort("18500/tcp")),
 	)
 	if err != nil {
@@ -114,6 +125,12 @@ func RunPodmanDaemon(ctx context.Context, t *testing.T) (testcontainers.Containe
 			t.Errorf("terminate Podman fixture: %v", err)
 		}
 	})
+	// Podman resolves bind sources in its own container namespace. Create the
+	// same canonical path there; the fixture workspace data is only consumed by
+	// nested sandbox containers, so it does not need a host bind mount.
+	if _, _, err := container.Exec(ctx, []string{"mkdir", "-p", "--", workspace}); err != nil {
+		t.Fatalf("create Podman fixture workspace: %v", err)
+	}
 	port, err := container.MappedPort(ctx, "18500/tcp")
 	if err != nil {
 		t.Fatalf("map Podman API port: %v", err)
@@ -122,7 +139,7 @@ func RunPodmanDaemon(ctx context.Context, t *testing.T) (testcontainers.Containe
 	if err != nil {
 		t.Fatalf("resolve Podman API host: %v", err)
 	}
-	return container, fmt.Sprintf("tcp://%s:%s", host, port.Port())
+	return container, fmt.Sprintf("tcp://%s:%s", host, port.Port()), workspace
 }
 
 var getenv = func(key string) string { return lookupEnv(key) }

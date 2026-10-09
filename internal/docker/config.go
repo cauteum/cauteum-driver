@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cauteum/cauteum-driver/internal/certbundle"
 )
 
 // ConfigFromMap decodes the Docker fields currently consumed by the shared
@@ -63,6 +65,10 @@ func ConfigFromMap(values map[string]any) (RuntimeConfig, string, error) {
 			cfg.UpstreamProxyConnectByHostname, err = configBool(value)
 		case "proxy_ca_bundle":
 			cfg.UpstreamProxyCABundle, err = nonEmptyProxyString(value, key)
+		case "egress_ca_bundle":
+			cfg.EgressCABundle, err = configString(value)
+		case "reconcile_data_ownership":
+			cfg.ReconcileDataOwnership, err = configBool(value)
 		default:
 			return RuntimeConfig{}, "", fmt.Errorf("docker: config field %q is not supported by the Engine API backend", key)
 		}
@@ -82,6 +88,9 @@ func ConfigFromMap(values map[string]any) (RuntimeConfig, string, error) {
 	if err := validateUpstreamProxyConfig(cfg); err != nil {
 		return RuntimeConfig{}, "", fmt.Errorf("docker: %w", err)
 	}
+	if err := validateEgressCABundle(cfg.EgressCABundle); err != nil {
+		return RuntimeConfig{}, "", fmt.Errorf("docker: %w", err)
+	}
 	if cfg.PidsLimit < 0 || cfg.StopTimeoutSecs < 0 || cfg.GatewayGRPCPort < 0 || cfg.GatewayGRPCPort > 65535 {
 		return RuntimeConfig{}, "", fmt.Errorf("docker: config value out of range")
 	}
@@ -94,6 +103,28 @@ func ConfigFromMap(values map[string]any) (RuntimeConfig, string, error) {
 		socket = "unix://" + socket
 	}
 	return cfg, socket, nil
+}
+
+func validateEgressCABundle(path string) error {
+	if path == "" {
+		return nil
+	}
+	if !filepath.IsAbs(path) || filepath.Clean(path) != path {
+		return fmt.Errorf("egress_ca_bundle must be an absolute clean path")
+	}
+	info, err := os.Stat(path)
+	if err != nil || !info.Mode().IsRegular() || info.Size() > 1<<20 {
+		return fmt.Errorf("egress_ca_bundle must be a readable regular file no larger than 1 MiB")
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("egress_ca_bundle is unreadable")
+	}
+	roots := x509.NewCertPool()
+	if err := certbundle.AppendPEM(roots, body); err != nil {
+		return fmt.Errorf("egress_ca_bundle is invalid: %w", err)
+	}
+	return nil
 }
 
 // NormalizeImagePullPolicy accepts OpenShell's canonical values plus the
