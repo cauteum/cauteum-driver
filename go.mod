@@ -5,7 +5,7 @@ go 1.27.0
 toolchain go1.27.2
 
 require (
-	github.com/cauteum-haven/cauteum-core v0.1.2
+	github.com/cauteum-haven/cauteum-core v0.1.4
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v29.2.0+incompatible
 	github.com/docker/go-units v0.5.0
