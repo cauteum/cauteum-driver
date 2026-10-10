@@ -53,7 +53,7 @@ func RunAlpine(ctx context.Context, t *testing.T) testcontainers.Container {
 // daemon. The returned endpoint is reachable from the test process.
 func RunDockerDaemon(ctx context.Context, t *testing.T) (testcontainers.Container, string) {
 	t.Helper()
-	container, err := testcontainers.Run(ctx, "docker.io/library/docker:27-dind",
+	container, err := testcontainers.Run(ctx, "docker.io/library/docker:28.0.4-dind",
 		testcontainers.WithExposedPorts("2375/tcp"),
 		// docker:dind declares /var/lib/docker as an anonymous volume. That
 		// volume is unnecessary with the vfs storage driver and accumulates on
@@ -62,6 +62,7 @@ func RunDockerDaemon(ctx context.Context, t *testing.T) (testcontainers.Containe
 		testcontainers.WithTmpfs(map[string]string{"/var/lib/docker": "rw,exec,size=4g"}),
 		testcontainers.WithHostConfigModifier(func(config *container.HostConfig) {
 			config.Privileged = true
+			config.CgroupnsMode = container.CgroupnsModeHost
 		}),
 		testcontainers.WithEnv(map[string]string{"DOCKER_TLS_CERTDIR": ""}),
 		// Keep the endpoint stable while allowing recovery tests to kill and
