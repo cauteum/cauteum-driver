@@ -10,6 +10,10 @@
 - Report rootless mode and engine security options for CLI diagnostics.
 - Run Podman 6.1.3 rootful and rootless lifecycle and user namespace checks in Linux CI.
 
+### Changed
+
+- Resolve `cauteum-core` from published v0.1.0-beta.2.
+
 ### Fixed
 
 - Validate OCI driver configuration and certificate bundles at the backend boundary.
