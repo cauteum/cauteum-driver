@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/cauteum-haven/cauteum-core"
+	"github.com/cautem/cauteum-core"
 )
 
 // SupervisorControlSocketName is mounted inside the shared SSH directory so
@@ -29,7 +29,7 @@ type Spec struct {
 	ProxyPort  int      // default defaults.ProxyPort
 	ProxyEnv   []string // real credential KEY=VAL for placeholder rewrite (proxy only)
 
-	// Harden (P4): linux cauteum-init binary mounted at /cauteum-haven/cauteum-init; execs are wrapped.
+	// Harden (P4): linux cauteum-init binary mounted at /cautem/cauteum-init; execs are wrapped.
 	InitBin  string
 	NoHarden bool
 	// SupervisorBin is the Go workload supervisor used as the container entrypoint.

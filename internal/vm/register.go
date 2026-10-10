@@ -1,6 +1,6 @@
 package vm
 
-import "github.com/cauteum-haven/cauteum-driver/driver"
+import "github.com/cautem/cauteum-driver/driver"
 
 func init() {
 	driver.Register("vm", func() (driver.ComputeDriver, error) {

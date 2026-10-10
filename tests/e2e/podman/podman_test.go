@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum-haven/cauteum-core"
-	"github.com/cauteum-haven/cauteum-driver/driver"
-	podman "github.com/cauteum-haven/cauteum-driver/internal/podman"
+	"github.com/cautem/cauteum-core"
+	"github.com/cautem/cauteum-driver/driver"
+	podman "github.com/cautem/cauteum-driver/internal/podman"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 )

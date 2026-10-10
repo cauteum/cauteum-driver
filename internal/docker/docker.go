@@ -27,11 +27,11 @@ import (
 	"archive/tar"
 	"path/filepath"
 
-	"github.com/cauteum-haven/cauteum-core"
-	"github.com/cauteum-haven/cauteum-core/defaults"
-	"github.com/cauteum-haven/cauteum-driver/driver"
-	"github.com/cauteum-haven/cauteum-driver/internal/mounts"
-	"github.com/cauteum-haven/cauteum-driver/internal/sidecar"
+	"github.com/cautem/cauteum-core"
+	"github.com/cautem/cauteum-core/defaults"
+	"github.com/cautem/cauteum-driver/driver"
+	"github.com/cautem/cauteum-driver/internal/mounts"
+	"github.com/cautem/cauteum-driver/internal/sidecar"
 )
 
 const (
@@ -378,7 +378,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 		if _, err := os.Stat(spec.InitBin); err != nil {
 			return driver.Handle{}, fmt.Errorf("docker init bin: %w", err)
 		}
-		binds = append(binds, spec.InitBin+":/cauteum-haven/cauteum-init:ro")
+		binds = append(binds, spec.InitBin+":/cautem/cauteum-init:ro")
 		if spec.PolicyPath != "" {
 			binds = append(binds, spec.PolicyPath+":/cauteum/policy.yaml:ro")
 			env = mergeEnv(env, []string{"CAUTEUM_POLICY=/cauteum/policy.yaml"})
@@ -392,7 +392,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 	}
 	if withSupervisor {
 		binds = append(binds,
-			spec.SupervisorBin+":/cauteum-haven/cauteum-supervisor:ro",
+			spec.SupervisorBin+":/cautem/cauteum-supervisor:ro",
 		)
 		labels["cauteum.supervisor"] = "go"
 	}
@@ -468,7 +468,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 	// Prefer host-mounted cauteum-init over whatever ENTRYPOINT the image baked
 	// (legacy osg-init looked for /osg/policy.yaml and dies on rename).
 	if !spec.NoHarden && strings.TrimSpace(spec.InitBin) != "" {
-		cfg.Entrypoint = []string{"/cauteum-haven/cauteum-init"}
+		cfg.Entrypoint = []string{"/cautem/cauteum-init"}
 		if len(spec.Command) == 0 && !usesEmbeddedInit(img) && !withDisplay {
 			// Image has no init wrapper — Cmd is the payload after "--".
 			cfg.Cmd = append([]string{"--"}, cmd...)
@@ -480,8 +480,8 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 		// The Go PID 1 supervisor owns workload lifecycle and signal handling.
 		// The hardened init remains the child entrypoint and applies Landlock
 		// plus the checked identity drop before execing the agent command.
-		cfg.Entrypoint = []string{"/cauteum-haven/cauteum-supervisor"}
-		cfg.Cmd = append([]string{"--", "/cauteum-haven/cauteum-init", "--policy", "/cauteum/policy.yaml", "--"}, workloadCmd...)
+		cfg.Entrypoint = []string{"/cautem/cauteum-supervisor"}
+		cfg.Cmd = append([]string{"--", "/cautem/cauteum-init", "--policy", "/cauteum/policy.yaml", "--"}, workloadCmd...)
 		cfg.User = "0"
 	}
 	host := &container.HostConfig{
@@ -706,7 +706,7 @@ func (d *Driver) Exec(ctx context.Context, id core.ID, req driver.ExecRequest) (
 	{
 		containerEnv = append([]string{}, info.Container.Config.Env...)
 		if info.Container.Config.Labels[labelInit] == "1" {
-			argv = append([]string{"/cauteum-haven/cauteum-init", "--"}, req.Argv...)
+			argv = append([]string{"/cautem/cauteum-init", "--"}, req.Argv...)
 		}
 		// Proxy sidecar has no /workspace mount; exec must not chdir there.
 		if info.Container.Config.Labels[labelRole] == roleProxy {
@@ -1906,11 +1906,11 @@ func (d *Driver) RunProbe(ctx context.Context, initBin string) (string, error) {
 	}
 	cfg := &container.Config{
 		Image:      defaultImage,
-		Cmd:        []string{"/cauteum-haven/cauteum-init", "--probe"},
+		Cmd:        []string{"/cautem/cauteum-init", "--probe"},
 		WorkingDir: "/",
 	}
 	host := &container.HostConfig{
-		Binds: []string{initBin + ":/cauteum-haven/cauteum-init:ro"},
+		Binds: []string{initBin + ":/cautem/cauteum-init:ro"},
 		// AutoRemove handled after wait
 	}
 	resp, err := d.cli.ContainerCreate(ctx, client.ContainerCreateOptions{Config: cfg, HostConfig: host, NetworkingConfig: nil, Name: ""})

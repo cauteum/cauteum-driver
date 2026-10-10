@@ -2,7 +2,7 @@ package docker
 
 import (
 	"fmt"
-	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cautem/cauteum-core/defaults"
 	"net"
 	"os"
 	"path/filepath"

@@ -5,20 +5,20 @@
   Docker-first sandbox runtime — mounts, ExtraHosts, egress sidecar wiring.
 </p>
 <p align="center">
-  <a href="https://github.com/cauteum-haven/cauteum-driver/actions/workflows/ci.yml"><img src="https://github.com/cauteum-haven/cauteum-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pkg.go.dev/github.com/cauteum-haven/cauteum-driver"><img src="https://pkg.go.dev/badge/github.com/cauteum-haven/cauteum-driver.svg" alt="Go Reference"></a>
+  <a href="https://github.com/cautem/cauteum-driver/actions/workflows/ci.yml"><img src="https://github.com/cautem/cauteum-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pkg.go.dev/github.com/cautem/cauteum-driver"><img src="https://pkg.go.dev/badge/github.com/cautem/cauteum-driver.svg" alt="Go Reference"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/cauteum-haven/cauteum-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
+  <a href="https://github.com/cautem/cauteum-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
-  <sub>Part of the <a href="https://github.com/cauteum-haven">cauteum / cauteum</a> ecosystem</sub>
+  <sub>Part of the <a href="https://github.com/cautem">cauteum / cauteum</a> ecosystem</sub>
 </p>
 
 ---
 
 ## Overview
 
-Backend setup and runtime limits are maintained in the [Docker](https://cauteum-haven.github.io/providers/docker/) and [Podman](https://cauteum-haven.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://cauteum-haven.github.io/reference/openshell-compatibility/) records the current comparison scope.
+Backend setup and runtime limits are maintained in the [Docker](https://cautem.github.io/cauteum-haven.github.io/providers/docker/) and [Podman](https://cautem.github.io/cauteum-haven.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://cautem.github.io/cauteum-haven.github.io/reference/openshell-compatibility/) records the current comparison scope.
 
 **cauteum-driver** implements `ComputeDriver` for cauteum: create/start/exec/delete containers, attach the egress sidecar, validate bind mounts, and inject OpenShell-style host-gateway aliases (`host.cauteum.internal`).
 
@@ -51,8 +51,8 @@ cover the client code; keep the Engine daemon updated independently.
 
 ```go
 import (
-    "github.com/cauteum-haven/cauteum-driver/driver"
-    _ "github.com/cauteum-haven/cauteum-driver/driver/all" // register backends
+    "github.com/cautem/cauteum-driver/driver"
+    _ "github.com/cautem/cauteum-driver/driver/all" // register backends
 )
 
 d, err := driver.OpenEngine("docker")
@@ -85,9 +85,9 @@ _ = hosts
 | Resource | Link |
 |----------|------|
 | Roadmap | [ROADMAP.md](./ROADMAP.md) |
-| Organization | [https://github.com/cauteum](https://github.com/cauteum-haven) |
-| Organization overview | [github.com/cauteum](https://github.com/cauteum-haven) |
-| pkg.go.dev | [`github.com/cauteum-haven/cauteum-driver`](https://pkg.go.dev/github.com/cauteum-haven/cauteum-driver) |
+| Organization | [https://github.com/cautem](https://github.com/cautem) |
+| Organization overview | [github.com/cautem](https://github.com/cautem) |
+| pkg.go.dev | [`github.com/cautem/cauteum-driver`](https://pkg.go.dev/github.com/cautem/cauteum-driver) |
 
 ## License
 

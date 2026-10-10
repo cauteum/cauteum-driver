@@ -14,7 +14,7 @@ import (
 	"github.com/moby/moby/api/pkg/authconfig"
 	registrytypes "github.com/moby/moby/api/types/registry"
 
-	"github.com/cauteum-haven/cauteum-driver/internal/docker"
+	"github.com/cautem/cauteum-driver/internal/docker"
 )
 
 const maxRegistryAuthFileBytes = 1 << 20

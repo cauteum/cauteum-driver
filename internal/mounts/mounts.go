@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cautem/cauteum-core/defaults"
 )
 
 // WorkdirInContainer is where the host workspace is mounted.

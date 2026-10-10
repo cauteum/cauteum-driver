@@ -6,7 +6,7 @@ package docker
 import (
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cautem/cauteum-core/defaults"
 )
 
 func TestResolveProxyImage(t *testing.T) {

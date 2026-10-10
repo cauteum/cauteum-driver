@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum-haven/cauteum-core"
-	"github.com/cauteum-haven/cauteum-driver/driver"
+	"github.com/cautem/cauteum-core"
+	"github.com/cautem/cauteum-driver/driver"
 	"github.com/moby/moby/client"
 )
 
@@ -454,14 +454,14 @@ func TestCreateRunsGoSupervisorAroundHardenedInit(t *testing.T) {
 	if err := json.Unmarshal(createdJSON, &config); err != nil {
 		t.Fatal(err)
 	}
-	if len(config.Entrypoint) != 1 || config.Entrypoint[0] != "/cauteum-haven/cauteum-supervisor" || config.User != "0" {
+	if len(config.Entrypoint) != 1 || config.Entrypoint[0] != "/cautem/cauteum-supervisor" || config.User != "0" {
 		t.Fatalf("container entrypoint/user=%v/%q, want Go supervisor PID 1 as root", config.Entrypoint, config.User)
 	}
-	wantArgs := []string{"--", "/cauteum-haven/cauteum-init", "--policy", "/cauteum/policy.yaml", "--", "sleep", "infinity"}
+	wantArgs := []string{"--", "/cautem/cauteum-init", "--policy", "/cauteum/policy.yaml", "--", "sleep", "infinity"}
 	if !slices.Equal(config.Cmd, wantArgs) {
 		t.Fatalf("Go supervisor command=%q, want %q", config.Cmd, wantArgs)
 	}
-	for _, want := range []string{"/cauteum-haven/cauteum-supervisor:ro", "/cauteum-haven/cauteum-init:ro", "/cauteum/policy.yaml:ro"} {
+	for _, want := range []string{"/cautem/cauteum-supervisor:ro", "/cautem/cauteum-init:ro", "/cauteum/policy.yaml:ro"} {
 		found := false
 		for _, bind := range host.Binds {
 			if strings.HasSuffix(bind, want) {

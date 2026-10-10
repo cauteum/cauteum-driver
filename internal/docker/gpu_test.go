@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-driver/driver"
+	"github.com/cautem/cauteum-driver/driver"
 )
 
 func TestDeviceRequestsForGPU(t *testing.T) {

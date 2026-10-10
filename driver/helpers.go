@@ -5,9 +5,9 @@ import (
 
 	"github.com/docker/go-units"
 
-	"github.com/cauteum-haven/cauteum-core/defaults"
-	"github.com/cauteum-haven/cauteum-driver/internal/mounts"
-	"github.com/cauteum-haven/cauteum-driver/internal/sidecar"
+	"github.com/cautem/cauteum-core/defaults"
+	"github.com/cautem/cauteum-driver/internal/mounts"
+	"github.com/cautem/cauteum-driver/internal/sidecar"
 )
 
 // WorkdirInContainer is where the host workspace is mounted in the guest.

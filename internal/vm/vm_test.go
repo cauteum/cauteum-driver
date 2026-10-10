@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cauteum-haven/cauteum-driver/driver"
+	"github.com/cautem/cauteum-driver/driver"
 )
 
 func TestStubCreate(t *testing.T) {
