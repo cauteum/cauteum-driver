@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cauteum/cauteum-driver/internal/certbundle"
 	docker "github.com/cauteum/cauteum-driver/internal/docker"
 )
 
@@ -57,6 +58,12 @@ func ConfigFromMap(values map[string]any) (Config, error) {
 			cfg.ProxyConnectByHostname, err = optionalBoolValue(value)
 		case "proxy_ca_bundle":
 			cfg.ProxyCABundle, err = nonEmptyProxyString(value, key)
+		case "registry_auth_file":
+			cfg.RegistryAuthFile, err = stringValue(value)
+		case "egress_ca_bundle":
+			cfg.EgressCABundle, err = stringValue(value)
+		case "reconcile_data_ownership":
+			cfg.ReconcileDataOwnership, err = boolValue(value)
 		case "image_pull_policy":
 			cfg.ImagePullPolicy, err = stringValue(value)
 		case "provider_spiffe_workload_api_socket":
@@ -96,6 +103,12 @@ func ConfigFromMap(values map[string]any) (Config, error) {
 	if err := validateGuestTLSPaths(cfg.GuestTLSCA, cfg.GuestTLSCert, cfg.GuestTLSKey); err != nil {
 		return Config{}, fmt.Errorf("podman: %w", err)
 	}
+	if err := validateRegistryAuthFile(cfg.RegistryAuthFile); err != nil {
+		return Config{}, fmt.Errorf("podman: %w", err)
+	}
+	if err := validateEgressCABundle(cfg.EgressCABundle); err != nil {
+		return Config{}, fmt.Errorf("podman: %w", err)
+	}
 	if err := validateProxyConfig(cfg); err != nil {
 		return Config{}, err
 	}
@@ -120,6 +133,27 @@ func ConfigFromMap(values map[string]any) (Config, error) {
 		return Config{}, fmt.Errorf("podman: uidmap and gidmap are only valid with userns=private")
 	}
 	return cfg, nil
+}
+
+func validateEgressCABundle(path string) error {
+	if path == "" {
+		return nil
+	}
+	if !filepath.IsAbs(path) || filepath.Clean(path) != path {
+		return fmt.Errorf("egress_ca_bundle must be an absolute clean path")
+	}
+	info, err := os.Stat(path)
+	if err != nil || !info.Mode().IsRegular() || info.Size() > 1<<20 {
+		return fmt.Errorf("egress_ca_bundle must be a readable regular file no larger than 1 MiB")
+	}
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("egress_ca_bundle is unreadable")
+	}
+	if err := certbundle.AppendPEM(x509.NewCertPool(), body); err != nil {
+		return fmt.Errorf("egress_ca_bundle is invalid: %w", err)
+	}
+	return nil
 }
 
 func canonicalUsernsMode(input string) (string, error) {

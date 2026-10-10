@@ -93,4 +93,11 @@ func (d *Driver) upstreamProxyEnv() []string {
 	return env
 }
 
+func (d *Driver) egressTrustEnv() []string {
+	if d == nil || strings.TrimSpace(d.runtimeConfig.EgressCABundle) == "" {
+		return nil
+	}
+	return []string{"CAUTEUM_EGRESS_CA_BUNDLE=/run/cauteum/egress-ca/ca.pem"}
+}
+
 func shellQuote(value string) string { return "'" + strings.ReplaceAll(value, "'", "'\\''") + "'" }

@@ -12,8 +12,12 @@ func TestResolveWorkspaceOK(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got != dir {
-		t.Fatalf("got %q want %q", got, dir)
+	want, err := filepath.EvalSymlinks(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != want {
+		t.Fatalf("got %q want canonical path %q", got, want)
 	}
 }
 

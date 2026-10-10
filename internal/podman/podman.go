@@ -58,6 +58,9 @@ type Config struct {
 	ProxyAuthAllowInsecure          *bool
 	ProxyConnectByHostname          *bool
 	ProxyCABundle                   string
+	RegistryAuthFile                string
+	EgressCABundle                  string
+	ReconcileDataOwnership          bool
 }
 
 // NewWithConfig creates a Podman-backed driver and applies compatible runtime settings.
@@ -78,6 +81,12 @@ func NewWithConfig(cfg Config) (*docker.Driver, error) {
 		}
 	}
 	if err := validateGuestTLSPaths(cfg.GuestTLSCA, cfg.GuestTLSCert, cfg.GuestTLSKey); err != nil {
+		return nil, fmt.Errorf("podman: %w", err)
+	}
+	if err := validateRegistryAuthFile(cfg.RegistryAuthFile); err != nil {
+		return nil, fmt.Errorf("podman: %w", err)
+	}
+	if err := validateEgressCABundle(cfg.EgressCABundle); err != nil {
 		return nil, fmt.Errorf("podman: %w", err)
 	}
 	if err := validateProxyConfig(cfg); err != nil {
@@ -127,6 +136,7 @@ func NewWithConfig(cfg Config) (*docker.Driver, error) {
 		policy = ""
 	}
 	runtimeCfg := docker.RuntimeConfig{
+		RuntimeContext:   podmanRuntimeContext(host),
 		EnableBindMounts: cfg.EnableBindMounts,
 		DefaultImage:     cfg.DefaultImage, NetworkName: cfg.NetworkName,
 		HostGatewayIP: cfg.HostGatewayIP, ImagePullPolicy: policy,
@@ -148,6 +158,9 @@ func NewWithConfig(cfg Config) (*docker.Driver, error) {
 		UpstreamProxyCABundle:          cfg.ProxyCABundle,
 		UpstreamProxyConnectByHostname: cfg.ProxyConnectByHostname != nil && *cfg.ProxyConnectByHostname,
 		Capabilities:                   []string{"cdi", "libpod-native", "userns"},
+		RegistryAuthResolver:           func(ref string) (string, error) { return podmanRegistryAuth(ref, cfg.RegistryAuthFile) },
+		EgressCABundle:                 cfg.EgressCABundle,
+		ReconcileDataOwnership:         cfg.ReconcileDataOwnership,
 	}
 	runtimeCfg.NativeNetworkCreate, runtimeCfg.NativeNetworkVerify = nativeNetworkCallbacks(host)
 	// Libpod's native create API supports the complete Podman userns mode set.
@@ -157,6 +170,13 @@ func NewWithConfig(cfg Config) (*docker.Driver, error) {
 		runtimeCfg.NativeContainerCreate = nativeCreate(host, cfg.UsernsMode, cfg.UIDMap, cfg.GIDMap)
 	}
 	return docker.NewFromClientWithRuntimeConfig(cli, runtimeCfg), nil
+}
+
+func podmanRuntimeContext(host string) string {
+	if strings.HasPrefix(host, "unix://") {
+		return "socket " + strings.TrimPrefix(host, "unix://")
+	}
+	return "remote endpoint"
 }
 
 // ResolveHost returns a docker client host URL (unix://… or tcp://…).

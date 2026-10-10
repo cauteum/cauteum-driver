@@ -1,5 +1,23 @@
 # Changelog
 
+## [Unreleased]
+
+## [v0.1.0-beta.2] - 2026-10-10
+
+### Added
+
+- Resolve Docker CLI and Podman authfile credentials for private image pulls without exposing secrets in sandbox metadata or errors.
+- Report rootless mode and engine security options for CLI diagnostics.
+- Run Podman 6.1.3 rootful and rootless lifecycle and user namespace checks in Linux CI.
+
+### Changed
+
+- Resolve `cauteum-core` from published v0.1.0-beta.2.
+
+### Fixed
+
+- Validate OCI driver configuration and certificate bundles at the backend boundary.
+
 ## [v0.1.0-beta.1] - 2026-10-08
 
 ### Changed
@@ -7,8 +25,6 @@
 - Classify Docker Desktop isolation from the host platform instead of daemon-provided labels.
 - Use platform-specific supervisor executable checks and keep POSIX file-mode tests off Windows.
 - Update the core dependency to v0.1.0-beta.1.
-
-## [Unreleased]
 
 ## [v0.1.0-alpha.2] - 2026-10-07
 

@@ -127,9 +127,12 @@ func TestEnsureNetworkRejectsExistingNonInternalProxyNetwork(t *testing.T) {
 		}
 	})
 
-	err := d.ensureNetwork(context.Background(), "proxy-sandbox-risk", "risk", true)
+	created, err := d.ensureNetwork(context.Background(), "proxy-sandbox-risk", "risk", true)
 	if err == nil || !strings.Contains(err.Error(), "not internal") {
 		t.Fatalf("non-internal existing network error=%v; want fail-closed refusal", err)
+	}
+	if created {
+		t.Fatal("existing non-internal network reported as created")
 	}
 	if createRequests != 0 {
 		t.Fatalf("unexpected replacement network create requests=%d", createRequests)
@@ -146,8 +149,12 @@ func TestEnsureNetworkReusesInternalProxyNetwork(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, `{"Id":"internal-network","Internal":true,"Options":{"com.docker.network.bridge.gateway_mode_ipv4":"isolated","com.docker.network.bridge.gateway_mode_ipv6":"isolated"}}`)
 	})
-	if err := d.ensureNetwork(context.Background(), "proxy-sandbox-safe", "safe", true); err != nil {
+	created, err := d.ensureNetwork(context.Background(), "proxy-sandbox-safe", "safe", true)
+	if err != nil {
 		t.Fatalf("reuse internal network: %v", err)
+	}
+	if created {
+		t.Fatal("existing internal network reported as newly created")
 	}
 }
 
@@ -268,6 +275,8 @@ func TestSplitSDKCreateAndInspectEngineContract(t *testing.T) {
 	d := sdkFixtureDriver(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
+		case r.URL.Path == "/v1.41/containers/json" && r.Method == http.MethodGet:
+			_, _ = io.WriteString(w, `[]`)
 		case strings.Contains(r.URL.Path, "/images/"):
 			_, _ = io.WriteString(w, `{"Id":"sha256:immutable-image-id","Config":{"User":"app:staff"}}`)
 		case strings.Contains(r.URL.Path, "/networks/"):
@@ -392,6 +401,8 @@ func TestCreateRunsGoSupervisorAroundHardenedInit(t *testing.T) {
 	d := sdkFixtureDriver(t, func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch {
+		case r.URL.Path == "/v1.41/containers/json" && r.Method == http.MethodGet:
+			_, _ = io.WriteString(w, `[]`)
 		case strings.Contains(r.URL.Path, "/images/"):
 			_, _ = io.WriteString(w, `{"Id":"sha256:immutable-image-id","Config":{"User":"sandbox"}}`)
 		case strings.Contains(r.URL.Path, "/networks/"):

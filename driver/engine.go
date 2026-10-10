@@ -13,6 +13,8 @@ type Probe struct {
 	Isolation       string
 	HostGOOS        string
 	Capabilities    []string
+	SecurityOptions []string
+	Rootless        string
 	Error           string
 }
 

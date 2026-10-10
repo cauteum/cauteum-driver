@@ -25,7 +25,7 @@ var denyBasenames = []string{
 	".cursor", ".codex", ".claude",
 }
 
-// ResolveWorkspace returns an absolute path and checks the deny-list.
+// ResolveWorkspace returns the canonical absolute path and checks the deny-list.
 // iKnow skips deny-list (still requires the path to exist as a directory).
 func ResolveWorkspace(path string, iKnow bool) (string, error) {
 	if strings.TrimSpace(path) == "" {
@@ -51,7 +51,7 @@ func ResolveWorkspace(path string, iKnow bool) (string, error) {
 			return "", err
 		}
 	}
-	return abs, nil
+	return canonical, nil
 }
 
 func checkDeny(abs string) error {

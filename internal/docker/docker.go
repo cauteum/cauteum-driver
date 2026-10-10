@@ -70,6 +70,7 @@ type Driver struct {
 
 // RuntimeConfig contains settings shared by Docker-compatible Engine backends.
 type RuntimeConfig struct {
+	RuntimeContext                  string
 	EnableBindMounts                bool
 	DefaultImage                    string
 	NetworkName                     string
@@ -95,9 +96,12 @@ type RuntimeConfig struct {
 	UpstreamProxyAuthAllowInsecure  bool
 	UpstreamProxyCABundle           string
 	UpstreamProxyConnectByHostname  bool
+	EgressCABundle                  string
+	ReconcileDataOwnership          bool
 	// Capabilities describes backend request features, not host hardware
 	// inventory. The latter is discovered separately when a GPU is requested.
-	Capabilities []string
+	Capabilities         []string
+	RegistryAuthResolver func(string) (string, error)
 	// NativeContainerCreate, when set by a backend adapter, replaces only the
 	// primary workload create request. Sidecars remain on the Engine API.
 	NativeContainerCreate func(context.Context, client.ContainerCreateOptions) (client.ContainerCreateResult, error)
@@ -105,6 +109,13 @@ type RuntimeConfig struct {
 	// are not represented by the Docker-compatible network contract.
 	NativeNetworkCreate func(context.Context, string, bool, map[string]string) error
 	NativeNetworkVerify func(context.Context, string, bool) error
+}
+
+func (d *Driver) registryAuth(imageRef string) (string, error) {
+	if d != nil && d.runtimeConfig.RegistryAuthResolver != nil {
+		return d.runtimeConfig.RegistryAuthResolver(imageRef)
+	}
+	return dockerRegistryAuth(imageRef)
 }
 
 // New returns a Docker compute driver using DOCKER_* env (FromEnv).
@@ -171,6 +182,20 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 	if name == "" {
 		return driver.Handle{}, fmt.Errorf("docker driver: sandbox name required")
 	}
+	// Refuse a retry while managed containers with this name still exist. A
+	// failed provisioning attempt must not delete a live sandbox's sidecar.
+	existing, err := d.cli.ContainerList(ctx, client.ContainerListOptions{
+		All: true,
+		Filters: client.Filters{}.
+			Add("label", labelSandbox+"=1").
+			Add("label", labelName+"="+name),
+	})
+	if err != nil {
+		return driver.Handle{}, fmt.Errorf("docker inspect existing sandbox %s: %w", name, err)
+	}
+	if len(existing.Items) > 0 {
+		return driver.Handle{}, fmt.Errorf("docker driver: sandbox %s already has managed container resources; recover or delete it before retrying create", name)
+	}
 	if spec.ProxyPort > 65535 || spec.DisplayPort > 65535 {
 		return driver.Handle{}, fmt.Errorf("docker driver: proxy/display ports must be at most 65535")
 	}
@@ -198,6 +223,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 	ctrName := "cauteum-" + name
 	withProxy := strings.TrimSpace(spec.ProxyBin) != ""
 	withSupervisor := strings.TrimSpace(spec.SupervisorBin) != ""
+	var caVol string
 	if withSupervisor {
 		if strings.TrimSpace(spec.InitBin) == "" || spec.PolicyPath == "" {
 			return driver.Handle{}, fmt.Errorf("docker supervisor: hardened init and policy are required")
@@ -245,9 +271,29 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 			}
 		}
 	}
-	if err := d.ensureNetwork(ctx, netName, name, withProxy); err != nil {
+	networkCreated, err := d.ensureNetwork(ctx, netName, name, withProxy)
+	if err != nil {
 		return driver.Handle{}, err
 	}
+	resourcesCommitted := false
+	proxyCreated := false
+	createdVolumes := make(map[string]bool)
+	defer func() {
+		if resourcesCommitted {
+			return
+		}
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
+		defer cancel()
+		if proxyCreated {
+			_ = d.removeProxySidecar(cleanupCtx, name)
+		}
+		for volume := range createdVolumes {
+			_, _ = d.cli.VolumeRemove(cleanupCtx, volume, client.VolumeRemoveOptions{Force: true})
+		}
+		if networkCreated {
+			_, _ = d.cli.NetworkRemove(cleanupCtx, netName, client.NetworkRemoveOptions{})
+		}
+	}()
 
 	// Driver identity metadata is trusted only when derived from the exact
 	// inspected image. Callers cannot spoof it through sandbox environment input.
@@ -257,7 +303,6 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 		ociImageUser = imageInfo.Config.User
 	}
 	env = mergeEnv(env, []string{"OPENSHELL_OCI_IMAGE_USER=" + ociImageUser})
-	var caVol string
 	if withProxy {
 		port := spec.ProxyPort
 		if port <= 0 {
@@ -265,25 +310,26 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 		}
 		proxyHost := "cauteum-proxy-" + name
 		caVol = "cauteum-ca-" + name
-		if err := d.ensureVolume(ctx, caVol); err != nil {
-			_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
+		created, err := d.ensureVolume(ctx, caVol)
+		if err != nil {
 			return driver.Handle{}, err
 		}
+		if created {
+			createdVolumes[caVol] = true
+		}
 		if sshVol != "" {
-			if err := d.ensureVolume(ctx, sshVol); err != nil {
-				_, _ = d.cli.VolumeRemove(ctx, caVol, client.VolumeRemoveOptions{Force: true})
-				_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
+			created, err := d.ensureVolume(ctx, sshVol)
+			if err != nil {
 				return driver.Handle{}, err
+			}
+			if created {
+				createdVolumes[sshVol] = true
 			}
 		}
 		if err := d.createProxySidecar(ctx, name, netName, proxyImg, spec.ProxyBin, spec.PolicyPath, port, caVol, sshVol, tcpDialSocket, spec.ProxyEnv, spec.PidsLimit); err != nil {
-			_, _ = d.cli.VolumeRemove(ctx, caVol, client.VolumeRemoveOptions{Force: true})
-			if sshVol != "" {
-				_, _ = d.cli.VolumeRemove(ctx, sshVol, client.VolumeRemoveOptions{Force: true})
-			}
-			_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
 			return driver.Handle{}, err
 		}
+		proxyCreated = true
 		env = mergeEnv(env, sidecar.ProxyEnv(proxyHost, port))
 		env = mergeEnv(env, sidecar.CABundleEnv(defaults.GuestCAFile))
 	}
@@ -314,11 +360,7 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 	}
 	if spec.PersistVolume {
 		volName := "cauteum-data-" + name
-		if err := d.ensureVolume(ctx, volName); err != nil {
-			if withProxy {
-				_ = d.removeProxySidecar(ctx, name)
-			}
-			_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
+		if _, err := d.ensureVolume(ctx, volName); err != nil {
 			return driver.Handle{}, err
 		}
 		binds = append(binds, volName+":"+guestDataPath+":rw")
@@ -328,6 +370,9 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 			"HOME=" + guestHomePath,
 			"PATH=" + guestPath,
 		})
+		if d.runtimeConfig.ReconcileDataOwnership {
+			env = mergeEnv(env, []string{"CAUTEUM_RECONCILE_DATA_OWNERSHIP=1"})
+		}
 	}
 	if !spec.NoHarden && strings.TrimSpace(spec.InitBin) != "" {
 		if _, err := os.Stat(spec.InitBin); err != nil {
@@ -531,18 +576,12 @@ func (d *Driver) Create(ctx context.Context, spec driver.Spec) (driver.Handle, e
 		resp, err = d.cli.ContainerCreate(ctx, createOpts)
 	}
 	if err != nil {
-		if withProxy {
-			_ = d.removeProxySidecar(ctx, name)
-		}
-		_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
-		if sshVol != "" {
-			_, _ = d.cli.VolumeRemove(ctx, sshVol, client.VolumeRemoveOptions{Force: true})
-		}
 		if len(host.DeviceRequests) > 0 {
 			return driver.Handle{}, fmt.Errorf("docker create %s: %w\nhint: enable NVIDIA CDI / Container Toolkit, or unset --gpu (see docs/exp/GPU.md)", ctrName, err)
 		}
 		return driver.Handle{}, fmt.Errorf("docker create %s: %w", ctrName, err)
 	}
+	resourcesCommitted = true
 	return driver.Handle{
 		ID:      core.ID(resp.ID),
 		Name:    name,
@@ -1059,16 +1098,16 @@ func (d *Driver) Logs(ctx context.Context, id core.ID, follow bool, w io.Writer)
 	}
 }
 
-func (d *Driver) ensureVolume(ctx context.Context, name string) error {
+func (d *Driver) ensureVolume(ctx context.Context, name string) (bool, error) {
 	_, err := d.cli.VolumeInspect(ctx, name, client.VolumeInspectOptions{})
 	if err == nil {
-		return nil
+		return false, nil
 	}
 	_, err = d.cli.VolumeCreate(ctx, client.VolumeCreateOptions{Name: name, Labels: map[string]string{"cauteum.volume": "1"}})
 	if err != nil {
-		return fmt.Errorf("docker volume create %s: %w", name, err)
+		return false, fmt.Errorf("docker volume create %s: %w", name, err)
 	}
-	return nil
+	return true, nil
 }
 
 // CopyTo tars srcHost and extracts at destPath inside the container.
@@ -1366,36 +1405,36 @@ func (d *Driver) rawExec(ctx context.Context, id string, argv []string) (int, er
 	return insp.ExitCode, nil
 }
 
-func (d *Driver) ensureNetwork(ctx context.Context, netName, sandboxName string, internal bool) error {
+func (d *Driver) ensureNetwork(ctx context.Context, netName, sandboxName string, internal bool) (bool, error) {
 	if internal && d.runtimeConfig.NativeNetworkCreate != nil && d.runtimeConfig.NativeNetworkVerify == nil {
-		return fmt.Errorf("network %s: native backend cannot verify host-gateway isolation", netName)
+		return false, fmt.Errorf("network %s: native backend cannot verify host-gateway isolation", netName)
 	}
 	inspected, err := d.cli.NetworkInspect(ctx, netName, client.NetworkInspectOptions{})
 	if err == nil {
 		if internal && !inspected.Network.Internal {
-			return fmt.Errorf("docker network %s already exists but is not internal; refusing proxy-isolated sandbox", netName)
+			return false, fmt.Errorf("docker network %s already exists but is not internal; refusing proxy-isolated sandbox", netName)
 		}
 		if internal && d.runtimeConfig.NativeNetworkVerify == nil && (inspected.Network.Options["com.docker.network.bridge.gateway_mode_ipv4"] != "isolated" || inspected.Network.Options["com.docker.network.bridge.gateway_mode_ipv6"] != "isolated") {
-			return fmt.Errorf("docker network %s does not isolate its host gateway; refusing proxy-isolated sandbox", netName)
+			return false, fmt.Errorf("docker network %s does not isolate its host gateway; refusing proxy-isolated sandbox", netName)
 		}
 		if internal && d.runtimeConfig.NativeNetworkVerify != nil {
 			if err := d.runtimeConfig.NativeNetworkVerify(ctx, netName, true); err != nil {
-				return fmt.Errorf("network %s lacks verified host-gateway isolation: %w", netName, err)
+				return false, fmt.Errorf("network %s lacks verified host-gateway isolation: %w", netName, err)
 			}
 		}
-		return nil
+		return false, nil
 	}
 	if d.runtimeConfig.NativeNetworkCreate != nil {
 		if err := d.runtimeConfig.NativeNetworkCreate(ctx, netName, internal, map[string]string{labelSandbox: "1", labelName: sandboxName}); err != nil {
-			return fmt.Errorf("native network create %s: %w", netName, err)
+			return false, fmt.Errorf("native network create %s: %w", netName, err)
 		}
 		if internal && d.runtimeConfig.NativeNetworkVerify != nil {
 			if err := d.runtimeConfig.NativeNetworkVerify(ctx, netName, true); err != nil {
 				_, _ = d.cli.NetworkRemove(ctx, netName, client.NetworkRemoveOptions{})
-				return fmt.Errorf("network %s lacks verified host-gateway isolation: %w", netName, err)
+				return false, fmt.Errorf("network %s lacks verified host-gateway isolation: %w", netName, err)
 			}
 		}
-		return nil
+		return true, nil
 	}
 	options := map[string]string(nil)
 	if internal {
@@ -1417,9 +1456,9 @@ func (d *Driver) ensureNetwork(ctx context.Context, netName, sandboxName string,
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("docker network create %s: %w", netName, err)
+		return false, fmt.Errorf("docker network create %s: %w", netName, err)
 	}
-	return nil
+	return true, nil
 }
 
 func (d *Driver) createProxySidecar(ctx context.Context, name, netName, img, binPath, policyPath string, port int, caVol, sshVol, tcpDialSocket string, proxyEnv []string, pidsLimit int64) error {
@@ -1437,7 +1476,6 @@ func (d *Driver) createProxySidecar(ctx context.Context, name, netName, img, bin
 		return fmt.Errorf("docker proxy policy: %w", err)
 	}
 	ctrName := "cauteum-proxy-" + name
-	_, _ = d.cli.ContainerRemove(ctx, ctrName, client.ContainerRemoveOptions{Force: true})
 
 	binds := []string{
 		binPath + ":/cauteum/cauteum:ro",
@@ -1446,6 +1484,7 @@ func (d *Driver) createProxySidecar(ctx context.Context, name, netName, img, bin
 	for _, entry := range []struct{ source, target string }{
 		{d.runtimeConfig.UpstreamProxyAuthFile, "/run/cauteum/upstream-proxy/auth"},
 		{d.runtimeConfig.UpstreamProxyCABundle, "/run/cauteum/upstream-proxy/ca.pem"},
+		{d.runtimeConfig.EgressCABundle, "/run/cauteum/egress-ca/ca.pem"},
 	} {
 		if entry.source == "" {
 			continue
@@ -1489,9 +1528,8 @@ func (d *Driver) createProxySidecar(ctx context.Context, name, netName, img, bin
 		cmd = append(cmd, "--ca-out", "/cauteum/ca/ca.pem")
 	}
 	env := append([]string{}, proxyEnv...)
-	if d.runtimeConfig.UpstreamProxyURL != "" {
-		env = mergeEnv(env, d.upstreamProxyEnv())
-	}
+	env = mergeEnv(env, d.upstreamProxyEnv())
+	env = mergeEnv(env, d.egressTrustEnv())
 	if d.runtimeConfig.GuestTLSCA != "" {
 		env = mergeEnv(env, []string{
 			"CAUTEUM_GUEST_TLS_CA=/run/cauteum/gateway-tls/ca.pem",
@@ -1759,17 +1797,15 @@ func (d *Driver) ensureImage(ctx context.Context, ref string) error {
 		}
 		return fmt.Errorf("docker image %s not found locally; build with: %s", ref, hint)
 	}
-	rc, err := d.cli.ImagePull(ctx, ref, client.ImagePullOptions{})
-	if err != nil {
-		return fmt.Errorf("docker pull %s: %w", ref, err)
-	}
-	defer rc.Close()
-	_, _ = io.Copy(io.Discard, rc)
-	return nil
+	return d.pullImage(ctx, ref)
 }
 
 func (d *Driver) pullImage(ctx context.Context, ref string) error {
-	rc, err := d.cli.ImagePull(ctx, ref, client.ImagePullOptions{})
+	auth, err := d.registryAuth(ref)
+	if err != nil {
+		return err
+	}
+	rc, err := d.cli.ImagePull(ctx, ref, client.ImagePullOptions{RegistryAuth: auth})
 	if err != nil {
 		return fmt.Errorf("docker pull %s: %w", ref, err)
 	}
@@ -1784,7 +1820,11 @@ func (d *Driver) pullImage(ctx context.Context, ref string) error {
 // the driver keys on (embedded init, GUI detection).
 func (d *Driver) pullAs(ctx context.Context, remote, local string) error {
 	fmt.Fprintf(os.Stderr, "docker: pulling %s (for %s)…\n", remote, local)
-	rc, err := d.cli.ImagePull(ctx, remote, client.ImagePullOptions{})
+	auth, err := d.registryAuth(remote)
+	if err != nil {
+		return err
+	}
+	rc, err := d.cli.ImagePull(ctx, remote, client.ImagePullOptions{RegistryAuth: auth})
 	if err != nil {
 		return fmt.Errorf("pull %s failed: %w", remote, err)
 	}
@@ -1931,8 +1971,15 @@ func summarizeProbeJSON(raw string) string {
 
 // Health probes the daemon (Ping + ServerVersion + Info).
 func (d *Driver) Health(ctx context.Context) driver.Probe {
+	runtimeContext := ""
+	if d != nil {
+		runtimeContext = d.runtimeConfig.RuntimeContext
+	}
+	if runtimeContext == "" {
+		runtimeContext = dockerContextName()
+	}
 	p := driver.Probe{
-		Context:      dockerContextName(),
+		Context:      runtimeContext,
 		HostGOOS:     runtime.GOOS,
 		Capabilities: d.capabilities(),
 	}
@@ -1963,6 +2010,16 @@ func (d *Driver) Health(ctx context.Context) driver.Probe {
 			p.Architecture = info.Info.Architecture
 		}
 		p.Isolation = classifyIsolation(runtime.GOOS, info.Info.OperatingSystem, info.Info.OSType)
+		p.SecurityOptions = append([]string(nil), info.Info.SecurityOptions...)
+		for _, option := range info.Info.SecurityOptions {
+			if strings.Contains(strings.ToLower(option), "rootless") {
+				p.Rootless = "yes"
+				break
+			}
+		}
+		if p.Rootless == "" {
+			p.Rootless = "no or unreported"
+		}
 	} else {
 		p.Isolation = classifyIsolation(runtime.GOOS, p.OperatingSystem, ver.Os)
 	}

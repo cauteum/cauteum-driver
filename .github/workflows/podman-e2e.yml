@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
+# SPDX-License-Identifier: Apache-2.0
+name: Podman E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  podman-rootful:
+    name: Podman E2E (rootful, 6.1.3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: cauteum-driver
+    env:
+      CAUTEUM_TESTCONTAINERS: "1"
+      CAUTEUM_TEST_PODMAN_IMAGE: cauteum-podman6-e2e:local
+    steps:
+      - name: Checkout driver
+        uses: actions/checkout@v4
+        with:
+          path: cauteum-driver
+      - name: Checkout core
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-core
+          path: cauteum-core
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+      - name: Configure Go workspace
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          cat > go.work <<'EOF'
+          go 1.27.0
+
+          use (
+            ./cauteum-core
+            ./cauteum-driver
+          )
+          EOF
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.2"
+          cache: true
+          cache-dependency-path: |
+            cauteum-driver/go.sum
+            cauteum-core/go.sum
+      - name: Build official Podman 6 E2E image
+        run: docker build -f tests/e2e/podman/Containerfile.podman6 -t "$CAUTEUM_TEST_PODMAN_IMAGE" .
+      - name: Run Podman behavioral E2E suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/podman-e2e.log"
+          go test -v -count=1 -timeout=20m ./tests/e2e/podman 2>&1 | tee "$log"
+          for test_name in \
+            TestPodmanDriverLifecycleAgainstTestcontainersEngine \
+            TestPodmanDriverRecoversAfterServiceRestart \
+            TestPodmanPullPolicyNeverFailsClosedBeforeNetworkCreate \
+            TestPodmanPullPolicySupportsDigestPinnedImage; do
+            if ! grep -F -- "--- PASS: $test_name" "$log" >/dev/null; then
+              echo "required Podman E2E test did not pass: $test_name" >&2
+              exit 1
+            fi
+          done
+          {
+            echo "### Podman behavioral E2E"
+            echo "- Engine: rootful $(docker run --rm "$CAUTEUM_TEST_PODMAN_IMAGE" podman --version) from Fedora 45 in a disposable privileged container"
+            echo "- Required tests passed: 4 (lifecycle, service recovery, pull policy, digest pinning)"
+            echo "- Rootless coverage: not included in this job"
+          } >> "$GITHUB_STEP_SUMMARY"

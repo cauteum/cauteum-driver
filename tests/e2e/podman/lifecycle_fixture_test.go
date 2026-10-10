@@ -16,7 +16,7 @@ import (
 
 func TestPodmanDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
 	ctx := testenv.RequireContainers(t)
-	_, endpoint := testenv.RunPodmanDaemon(ctx, t)
+	_, endpoint, workspace := testenv.RunPodmanDaemon(ctx, t)
 	t.Setenv("DOCKER_HOST", endpoint)
 
 	engine, err := podman.NewWithConfig(podman.Config{
@@ -33,7 +33,7 @@ func TestPodmanDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
 	handle, err := engine.Create(ctx, driver.Spec{
 		Name:             "testcontainers-podman-lifecycle",
 		Image:            "docker.io/library/alpine:3.22",
-		Workspace:        "/tmp",
+		Workspace:        workspace,
 		Command:          []string{"sh", "-c", "echo ready; sleep 60"},
 		NoHarden:         true,
 		CPU:              0.25,
@@ -76,7 +76,7 @@ func TestPodmanDriverLifecycleAgainstTestcontainersEngine(t *testing.T) {
 
 func TestPodmanDriverRecoversAfterServiceRestart(t *testing.T) {
 	ctx := testenv.RequireContainers(t)
-	daemon, endpoint := testenv.RunPodmanDaemon(ctx, t)
+	daemon, endpoint, workspace := testenv.RunPodmanDaemon(ctx, t)
 	t.Setenv("DOCKER_HOST", endpoint)
 
 	api, err := client.New(client.WithHost(endpoint), client.WithAPIVersionNegotiation())
@@ -98,7 +98,7 @@ func TestPodmanDriverRecoversAfterServiceRestart(t *testing.T) {
 	handle, err := engine.Create(ctx, driver.Spec{
 		Name:      "testcontainers-podman-recovery",
 		Image:     "docker.io/library/alpine:3.22",
-		Workspace: "/tmp",
+		Workspace: workspace,
 		Command:   []string{"sh", "-c", "sleep 120"},
 		NoHarden:  true,
 	})
@@ -114,7 +114,7 @@ func TestPodmanDriverRecoversAfterServiceRestart(t *testing.T) {
 		t.Fatalf("write recovery marker: result=%+v err=%v", result, err)
 	}
 
-	if _, _, err := daemon.Exec(ctx, []string{"sh", "-c", "kill $(pidof podman)"}); err != nil {
+	if _, _, err := daemon.Exec(ctx, []string{"sh", "-c", "kill \"$(cat /tmp/podman-service.pid)\""}); err != nil {
 		t.Fatalf("stop Podman API service: %v", err)
 	}
 	outageCtx, outageCancel := context.WithTimeout(context.Background(), 5*time.Second)
