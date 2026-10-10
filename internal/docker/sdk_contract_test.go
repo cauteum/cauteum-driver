@@ -519,7 +519,6 @@ func TestSplitSDKExecEngineContract(t *testing.T) {
 				t.Error(err)
 				return
 			}
-			defer connection.Close()
 			_, _ = buffer.WriteString("HTTP/1.1 101 UPGRADED\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n")
 			var header [8]byte
 			header[0] = 1
@@ -527,6 +526,15 @@ func TestSplitSDKExecEngineContract(t *testing.T) {
 			_, _ = buffer.Write(header[:])
 			_, _ = buffer.WriteString("hello\n")
 			_ = buffer.Flush()
+			// Finish the response stream with a TCP half-close, then drain the
+			// client's close. Closing the socket immediately after Flush can
+			// reset the connection on Windows while the Docker client is still
+			// consuming the final multiplexed frame.
+			if halfCloser, ok := connection.(interface{ CloseWrite() error }); ok {
+				_ = halfCloser.CloseWrite()
+				_, _ = io.Copy(io.Discard, buffer)
+			}
+			_ = connection.Close()
 		case "/v1.41/exec/exec-id/json":
 			_, _ = io.WriteString(w, `{"ExitCode":0,"Running":false}`)
 		default:
