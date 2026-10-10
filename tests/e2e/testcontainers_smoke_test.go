@@ -3,7 +3,7 @@ package e2e
 import (
 	"testing"
 
-	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
+	"github.com/cauteum-haven/cauteum-driver/tests/internal/testenv"
 )
 
 func TestTestcontainersRuntime(t *testing.T) {

@@ -30,7 +30,7 @@ jobs:
       - name: Checkout core
         uses: actions/checkout@v4
         with:
-          repository: cauteum/cauteum-core
+          repository: cauteum-haven/cauteum-core
           path: cauteum-core
           ref: 9b32ff965beffcaadaa6361630b9d821370a564c
       - name: Configure Go workspace

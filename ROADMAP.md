@@ -1,6 +1,6 @@
 # Roadmap — cauteum-driver
 
-Status: **v0.1.0-alpha.1** (alpha) · Depends on [cauteum-core](https://github.com/cauteum/cauteum-core) `v0.1.0-alpha.1`
+Status: **v0.1.0-alpha.1** (alpha) · Depends on [cauteum-core](https://github.com/cauteum-haven/cauteum-core) `v0.1.0-alpha.1`
 
 ## This module
 

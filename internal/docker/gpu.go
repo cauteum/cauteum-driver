@@ -8,8 +8,8 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 
-	"github.com/cauteum/cauteum-core/defaults"
-	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-driver/driver"
 )
 
 // ValidateGPURequest enforces the pinned OpenShell relationship between a

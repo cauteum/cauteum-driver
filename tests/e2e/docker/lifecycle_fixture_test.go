@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-driver/driver"
-	docker "github.com/cauteum/cauteum-driver/internal/docker"
-	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
+	"github.com/cauteum-haven/cauteum-driver/driver"
+	docker "github.com/cauteum-haven/cauteum-driver/internal/docker"
+	"github.com/cauteum-haven/cauteum-driver/tests/internal/testenv"
 	"github.com/moby/moby/client"
 )
 

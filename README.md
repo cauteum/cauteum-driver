@@ -5,13 +5,13 @@
   Docker-first sandbox runtime — mounts, ExtraHosts, egress sidecar wiring.
 </p>
 <p align="center">
-  <a href="https://github.com/cauteum/cauteum-driver/actions/workflows/ci.yml"><img src="https://github.com/cauteum/cauteum-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://pkg.go.dev/github.com/cauteum/cauteum-driver"><img src="https://pkg.go.dev/badge/github.com/cauteum/cauteum-driver.svg" alt="Go Reference"></a>
+  <a href="https://github.com/cauteum-haven/cauteum-driver/actions/workflows/ci.yml"><img src="https://github.com/cauteum-haven/cauteum-driver/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://pkg.go.dev/github.com/cauteum-haven/cauteum-driver"><img src="https://pkg.go.dev/badge/github.com/cauteum-haven/cauteum-driver.svg" alt="Go Reference"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/cauteum/cauteum-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
+  <a href="https://github.com/cauteum-haven/cauteum-driver"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
-  <sub>Part of the <a href="https://github.com/cauteum">cauteum / cauteum</a> ecosystem</sub>
+  <sub>Part of the <a href="https://github.com/cauteum-haven">cauteum / cauteum</a> ecosystem</sub>
 </p>
 
 ---
@@ -51,8 +51,8 @@ cover the client code; keep the Engine daemon updated independently.
 
 ```go
 import (
-    "github.com/cauteum/cauteum-driver/driver"
-    _ "github.com/cauteum/cauteum-driver/driver/all" // register backends
+    "github.com/cauteum-haven/cauteum-driver/driver"
+    _ "github.com/cauteum-haven/cauteum-driver/driver/all" // register backends
 )
 
 d, err := driver.OpenEngine("docker")
@@ -85,9 +85,9 @@ _ = hosts
 | Resource | Link |
 |----------|------|
 | Roadmap | [ROADMAP.md](./ROADMAP.md) |
-| Organization | [https://github.com/cauteum](https://github.com/cauteum) |
-| Organization overview | [github.com/cauteum](https://github.com/cauteum) |
-| pkg.go.dev | [`github.com/cauteum/cauteum-driver`](https://pkg.go.dev/github.com/cauteum/cauteum-driver) |
+| Organization | [https://github.com/cauteum](https://github.com/cauteum-haven) |
+| Organization overview | [github.com/cauteum](https://github.com/cauteum-haven) |
+| pkg.go.dev | [`github.com/cauteum-haven/cauteum-driver`](https://pkg.go.dev/github.com/cauteum-haven/cauteum-driver) |
 
 ## License
 

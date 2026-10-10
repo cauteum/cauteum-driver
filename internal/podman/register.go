@@ -1,6 +1,6 @@
 package podman
 
-import "github.com/cauteum/cauteum-driver/driver"
+import "github.com/cauteum-haven/cauteum-driver/driver"
 
 func init() {
 	driver.Register("podman", func() (driver.ComputeDriver, error) {

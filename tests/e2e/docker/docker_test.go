@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-core"
-	"github.com/cauteum/cauteum-driver/driver"
-	docker "github.com/cauteum/cauteum-driver/internal/docker"
+	"github.com/cauteum-haven/cauteum-core"
+	"github.com/cauteum-haven/cauteum-driver/driver"
+	docker "github.com/cauteum-haven/cauteum-driver/internal/docker"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 )

@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-driver/driver"
-	podman "github.com/cauteum/cauteum-driver/internal/podman"
-	"github.com/cauteum/cauteum-driver/tests/internal/testenv"
+	"github.com/cauteum-haven/cauteum-driver/driver"
+	podman "github.com/cauteum-haven/cauteum-driver/internal/podman"
+	"github.com/cauteum-haven/cauteum-driver/tests/internal/testenv"
 	"github.com/moby/moby/client"
 )
 

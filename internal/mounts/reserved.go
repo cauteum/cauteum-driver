@@ -5,7 +5,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-core/defaults"
 )
 
 // OpenShell-aligned guest reserved roots (cauteum control plane + OCI runtime mounts).

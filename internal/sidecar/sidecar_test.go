@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-core/defaults"
 )
 
 func TestCABundleEnvIncludesGit(t *testing.T) {

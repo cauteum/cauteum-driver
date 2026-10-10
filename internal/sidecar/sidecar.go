@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-core/defaults"
 )
 
 // EnsureLinuxCLI builds (if needed) a linux/$GOARCH cauteum binary for mounting into the proxy sidecar.

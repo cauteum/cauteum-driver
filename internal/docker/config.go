@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cauteum/cauteum-driver/internal/certbundle"
+	"github.com/cauteum-haven/cauteum-driver/internal/certbundle"
 )
 
 // ConfigFromMap decodes the Docker fields currently consumed by the shared

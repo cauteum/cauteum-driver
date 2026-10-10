@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cauteum/cauteum-core"
-	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum-haven/cauteum-core"
+	"github.com/cauteum-haven/cauteum-driver/driver"
 )
 
 // Driver is a placeholder for a future client-go / Agent Sandbox backend.
