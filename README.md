@@ -18,7 +18,7 @@
 
 ## Overview
 
-Backend setup and runtime limits are maintained in the [Docker](https://cauteum.github.io/providers/docker/) and [Podman](https://cauteum.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://cauteum.github.io/reference/openshell-compatibility/) records the current comparison scope.
+Backend setup and runtime limits are maintained in the [Docker](https://cauteum-haven.github.io/providers/docker/) and [Podman](https://cauteum-haven.github.io/providers/podman/) guides. The [OpenShell compatibility page](https://cauteum-haven.github.io/reference/openshell-compatibility/) records the current comparison scope.
 
 **cauteum-driver** implements `ComputeDriver` for cauteum: create/start/exec/delete containers, attach the egress sidecar, validate bind mounts, and inject OpenShell-style host-gateway aliases (`host.cauteum.internal`).
 
