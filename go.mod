@@ -7,7 +7,7 @@ toolchain go1.27.2
 require (
 	github.com/cauteum/cauteum-core v0.1.0-beta.2
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v28.2.2+incompatible
+	github.com/docker/cli v29.2.0+incompatible
 	github.com/docker/go-units v0.5.0
 	github.com/moby/moby/api v1.56.1
 	github.com/moby/moby/client v0.6.1
@@ -46,7 +46,6 @@ require (
 	github.com/moby/term v0.5.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
