@@ -37,7 +37,7 @@ jobs:
         with:
           repository: cauteum-haven/cauteum-core
           path: cauteum-core
-          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+          ref: 69e1d1339884cf72933ff6dda7c9b54822db7225
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -102,7 +102,7 @@ jobs:
         with:
           repository: cauteum-haven/cauteum-core
           path: cauteum-core
-          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+          ref: 69e1d1339884cf72933ff6dda7c9b54822db7225
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -167,7 +167,7 @@ jobs:
         with:
           repository: cauteum-haven/cauteum-core
           path: cauteum-core
-          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+          ref: 69e1d1339884cf72933ff6dda7c9b54822db7225
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -230,7 +230,7 @@ jobs:
         with:
           repository: cauteum-haven/cauteum-core
           path: cauteum-core
-          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+          ref: 69e1d1339884cf72933ff6dda7c9b54822db7225
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
